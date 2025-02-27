@@ -1,0 +1,64 @@
+
+KADLYZER SECURITY SCAN REPORT
+============================
+Timestamp: 20250227_224311
+Target: https://www.ncbi.nlm.nih.gov
+Domain: www.ncbi.nlm.nih.gov
+
+SCAN RESULTS
+===========
+
+Discovered Parameters:
+--------------------
+- term
+
+Vulnerabilities Found:
+--------------------
+
+Type: ssrf
+Severity: medium
+URL: https://www.ncbi.nlm.nih.gov?test=http://localhost
+Payload: http://localhost
+--------------------------------------------------
+
+Type: ssrf
+Severity: medium
+URL: https://www.ncbi.nlm.nih.gov?test=dict://localhost:11211/
+Payload: dict://localhost:11211/
+--------------------------------------------------
+
+Type: ssti
+Severity: medium
+URL: https://www.ncbi.nlm.nih.gov?test={{7*7}}
+Payload: {{7*7}}
+--------------------------------------------------
+
+Type: ssti
+Severity: medium
+URL: https://www.ncbi.nlm.nih.gov?test=${7*7}
+Payload: ${7*7}
+--------------------------------------------------
+
+Type: ssti
+Severity: medium
+URL: https://www.ncbi.nlm.nih.gov?test=<%= 7*7 %>
+Payload: <%= 7*7 %>
+--------------------------------------------------
+
+Type: nosql
+Severity: medium
+URL: https://www.ncbi.nlm.nih.gov?test={"$gt":""}
+Payload: {"$gt":""}
+--------------------------------------------------
+
+Type: nosql
+Severity: medium
+URL: https://www.ncbi.nlm.nih.gov?test={"$ne": null}
+Payload: {"$ne": null}
+--------------------------------------------------
+
+Type: nosql
+Severity: medium
+URL: https://www.ncbi.nlm.nih.gov?test={"$where": "1==1"}
+Payload: {"$where": "1==1"}
+--------------------------------------------------

