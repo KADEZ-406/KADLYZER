@@ -1,29 +1,32 @@
+# Required libraries for kadlyzer
 import os
+import subprocess
 
-def install_bahan():
-    print("\n[🔧] Memulai instalasi bahan yang dibutuhkan...\n")
-    
-    # List package yang dibutuhkan
+def install_packages():
     packages = [
-        "requests",
-        "socket",
-        "json",
-        "threading",
-        "random",
-        "base64",
-        "time"
+        "requests",           # Untuk melakukan HTTP requests
+        "beautifulsoup4",     # Untuk parsing HTML
+        "lxml",              # Parser yang cepat untuk BeautifulSoup
+        "colorama",          # Untuk output berwarna di terminal
+        "pyfiglet",         # Untuk membuat ASCII art text
+        "pyyaml",           # Untuk membaca file YAML
+        "fake-useragent",   # Untuk menghasilkan User-Agent acak
+        "urllib3",          # Dependency untuk requests
+        "certifi",          # Untuk SSL/TLS certificate verification
+        "charset-normalizer" # Untuk menangani encoding
     ]
     
-    # Install tiap package
+    print("Menginstal package yang dibutuhkan...")
     for package in packages:
         try:
-            print(f"[⏳] Menginstall {package}...")
-            os.system(f"pip install {package}")
-            print(f"[✔] {package} berhasil diinstall!\n")
+            print(f"Menginstal {package}...")
+            subprocess.check_call([os.sys.executable, "-m", "pip", "install", package])
+            print(f"✓ {package} berhasil diinstal")
+        except subprocess.CalledProcessError:
+            print(f"❌ Gagal menginstal {package}")
         except Exception as e:
-            print(f"[✖] Gagal menginstall {package}: {e}\n")
-
-    print("[✅] Semua bahan sudah diinstall! Jalankan `python kadlyzer.py` untuk mulai scanning.")
+            print(f"❌ Error saat menginstal {package}: {str(e)}")
 
 if __name__ == "__main__":
-    install_bahan()
+    install_packages()
+    print("\nProses instalasi selesai!")

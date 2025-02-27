@@ -1,100 +1,157 @@
-# 💀 KADLYZER v7.0 - The Ultimate Web Pentesting Tool 💀
+# 💀 KADLYZER v8.0 - Enhanced Security Testing Tool 💀
 
 ![GitHub stars](https://img.shields.io/github/stars/username/KADLYZER?style=social)
 ![GitHub forks](https://img.shields.io/github/forks/username/KADLYZER?style=social)
 ![GitHub contributors](https://img.shields.io/github/contributors/username/KADLYZER?color=blue)
 ![GitHub last commit](https://img.shields.io/github/last-commit/username/KADLYZER)
 ![Python](https://img.shields.io/badge/Python-3.x-blue?style=flat-square)
-![Security](https://img.shields.io/badge/Security-Hacking-yellow?style=flat-square)
+![Security](https://img.shields.io/badge/Security-Testing-yellow?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-> **"Bypass Segala Benteng, Temukan Celah Tersembunyi!"**  
-> 🛡️ **KADLYZER** adalah tool penetration testing otomatis yang **super canggih** untuk menemukan, mengeksploitasi, dan melaporkan celah keamanan dalam **hitungan detik!**  
+> **"Advanced Security Testing & Vulnerability Assessment"**  
+> 🛡️ **KADLYZER** adalah tool security testing otomatis yang dilengkapi dengan fitur-fitur canggih untuk mendeteksi, menganalisis, dan melaporkan potensi celah keamanan secara komprehensif.
 
 ---
 
 ## 🔥 **FITUR UTAMA**
-✅ **AI-Powered Recon** → Scraping subdomain, email, DNS, & teknologi website  
-✅ **Deep Port Scanning** → Scan port (1-65535) **super cepat** dengan multi-threading  
-✅ **Advanced WAF Bypass++** → Header rotation, TLS fingerprinting, & IP spoofing  
-✅ **Multi-Vector Vulnerability Scan** → SQLi, XSS, RCE, LFI, SSRF, SSTI, CSRF, IDOR, dll  
-✅ **Auto-Exploitation & Smart Payload Rotation** → Payload otomatis berubah setiap eksekusi  
-✅ **Stealth Mode + IDS/IPS Evasion** → Payload obfuscation agar tidak terdeteksi security tools  
-✅ **Auto-Backdoor Injection** → Jika bisa masuk, langsung tanam backdoor untuk persistent access  
-✅ **Real-Time Encrypted Report** → Supaya data tetap aman & sulit di-detect forensic tools  
+
+### 🔍 Reconnaissance
+- DNS Record Analysis
+- WHOIS Information Gathering
+- SSL Certificate Analysis
+- Service & Technology Detection
+- IP Address Enumeration
+
+### 🌐 Network Analysis
+- Advanced Port Scanning (1-65535)
+- Service Version Detection
+- Banner Grabbing
+- Protocol Analysis
+- Network Service Fingerprinting
+
+### 🛡️ WAF Detection & Bypass
+- Multiple WAF Detection Methods
+- Advanced Bypass Techniques:
+  - Double URL Encoding
+  - Unicode Bypass
+  - Case Switching
+  - Null Byte Injection
+  - Path Traversal
+  - Protocol Pollution
+  - Charset Manipulation
+
+### 🔐 Vulnerability Assessment
+- SQL Injection Testing
+- Cross-Site Scripting (XSS)
+- Remote Code Execution (RCE)
+- Local File Inclusion (LFI)
+- Server-Side Request Forgery (SSRF)
+- XML External Entity (XXE)
+- Directory Traversal
+- File Upload Vulnerabilities
+
+### 🚀 Advanced Features
+- Parallel Scanning Architecture
+- Multi-threaded Operations
+- Intelligent Payload Generation
+- False Positive Validation
+- Risk Score Calculation
+- Comprehensive HTML & JSON Reports
 
 ---
 
-## 🚀 **INSTALLASI**
-Jalankan perintah berikut untuk install semua dependensi:  
+## 📋 **PERSYARATAN**
+- Python 3.8+
+- Requests
+- aiohttp
+- BeautifulSoup4
+- concurrent.futures
+- urllib3
+- socket
+- ssl
+- json
+
+## 🔧 **INSTALLASI**
 ```bash
-python bahan.py
-```
-Atau secara manual:  
-```bash
+# Clone repository
+git clone https://github.com/username/KADLYZER.git
+
+# Masuk ke direktori
+cd KADLYZER
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
----
-
-## 🎮 **CARA MENGGUNAKAN**
-1⃣ **Jalankan KADLYZER v7.0**  
+## 🎯 **PENGGUNAAN**
 ```bash
-python kadlyzer.py
-```
-2⃣ **Masukkan target domain** (contoh: `google.com`)  
-3⃣ **Tunggu proses scanning & eksploitasi berjalan**  
-4⃣ **Lihat hasil dan rekomendasi exploit**  
-5⃣ **Gunakan payload dan backdoor yang disediakan**  
+# Basic scan
+python kadlyzer.py -t example.com
 
----
+# Full scan dengan thread maksimum
+python kadlyzer.py -t example.com --full --threads 100
 
-## 🌜 **CONTOH HASIL SCANNING**  
-```
-[🔍] Mengumpulkan informasi tentang target.com...
-[✔] IP Target: 192.168.1.1
-[✔] WHOIS Data:
-   Registrant: Example Inc.
-   Created: 2022-05-12
-
-[🔎] Memeriksa port terbuka...
-[✔] Port terbuka: [22, 80, 443]
-
-[🛡] Mencoba bypass WAF...
-[✔] Bypass berhasil dengan User-Agent: Googlebot
-
-[💥] Melakukan scanning celah keamanan...
-[✔] Target rentan terhadap SQL Injection dengan payload: ' OR '1'='1' --
-[✔] Target rentan terhadap XSS dengan payload: <script>alert('XSS')</script>
-
-[💣] Rekomendasi exploit:
-   1. SQL Injection → Gunakan SQLMap
-   2. XSS → Inject script berbahaya
-   3. LFI → Akses file sensitif
-   4. RCE → Remote Command Execution
-
-[📝] Laporan disimpan sebagai report_target.com.json
+# Scan dengan output spesifik
+python kadlyzer.py -t example.com -o custom_report
 ```
 
+### Parameter yang Tersedia:
+- `-t, --target`: Target domain/URL
+- `-o, --output`: Direktori output report
+- `-f, --full`: Mode full scan
+- `--threads`: Jumlah thread
+- `--timeout`: Connection timeout
+- `-q, --quiet`: Mode quiet
+
+## 📊 **CONTOH REPORT**
+```json
+{
+    "scan_info": {
+        "target": "example.com",
+        "timestamp": "2024-03-14 15:30:00",
+        "risk_score": 75,
+        "risk_level": "High"
+    },
+    "findings": {
+        "open_ports": ["80", "443", "3306"],
+        "vulnerabilities": {
+            "sql_injection": ["login.php", "search.php"],
+            "xss": ["comment.php"],
+            "path_traversal": ["download.php"]
+        }
+    }
+}
+```
+
+## 🔒 **FITUR KEAMANAN**
+- WAF Detection & Fingerprinting
+- Intelligent Rate Limiting
+- Stealth Mode Operations
+- False Positive Reduction
+- Safe Payload Testing
+
+## 📈 **RISK SCORING**
+- Low (0-25): Risiko minimal
+- Medium (26-50): Perlu perhatian
+- High (51-75): Tindakan segera
+- Critical (76-100): Tindakan darurat
+
+## ⚠️ **DISCLAIMER**
+**KADLYZER v8.0 dirancang untuk security testing yang sah dan beretika.**
+- Gunakan hanya pada sistem yang Anda miliki atau dengan izin tertulis
+- Patuhi hukum dan regulasi yang berlaku
+- Penggunaan tidak sah dapat dikenakan sanksi hukum
+
+
+## 📜 **LISENSI**
+Didistribusikan di bawah Lisensi MIT. Lihat `LICENSE` untuk informasi lebih lanjut.
+
+## 📞 **KONTAK**
+Kadez - [@kadez_osawa](https://instagram.com/kadez_osawa)
+
+Project Link: [https://github.com/KADEZ-406/KADLYZER](https://github.com/KADEZ-406/KADLYZER)
+
 ---
- ⚠️ jika ada saran dan kritik langsung DM  ig ku di @kadez_osawa
----
 
-## ⚠ **DISCLAIMER**
-**KADLYZER v7.0 dibuat untuk tujuan edukasi & legal penetration testing.**  
-🔴 **Dilarang menggunakan tool ini untuk aktivitas ilegal!**  
-🔴 **Penggunaan tanpa izin dapat melanggar hukum (UU ITE, CFAA, dll).**  
-🔴 **Gunakan hanya pada sistem yang Anda miliki atau dengan izin tertulis.**  
-
-🛡️ **"Hack with Ethics, Learn with Responsibility!"**  
-
----
-
-## ⭐ **DUKUNG KADLYZER!**
-🔥 **Jika tool ini bermanfaat, jangan lupa untuk:**  
-🇸 **⭐ Star repository ini!**  
-🇸 **🍴 Fork dan kontribusi!**  
-🇸 **📢 Share ke teman-teman pentester lainnya!**  
-
-**💀 KADLYZER v7.0 – The Ultimate Web Pentesting Tool! 💀**
+**💀 KADLYZER v8.0 - Advanced Security Testing & Vulnerability Assessment 💀**
 

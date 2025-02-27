@@ -1,0 +1,46 @@
+2025-02-27 18:04:55,724 [INFO] Starting scan on http://smktarunabhakti.net...
+2025-02-27 18:04:55,725 [INFO] Phase 1: Reconnaissance
+2025-02-27 18:04:55,727 [INFO] Starting reconnaissance on smktarunabhakti.net...
+2025-02-27 18:04:55,795 [INFO] IP Target: 117.102.67.68 (+ 0 additional)
+2025-02-27 18:04:57,675 [INFO] WHOIS Data retrieved successfully
+2025-02-27 18:05:01,082 [INFO] DNS records retrieved successfully
+2025-02-27 18:05:01,084 [INFO] Phase 2: Port Scanning
+2025-02-27 18:05:01,084 [INFO] Starting port scan on smktarunabhakti.net...
+2025-02-27 18:05:01,232 [INFO] Port 443 (HTTPS) is open
+2025-02-27 18:05:01,353 [INFO] Port 80 (HTTP) is open
+2025-02-27 18:05:06,096 [INFO] Found 2 open ports
+2025-02-27 18:05:06,097 [INFO]   80/tcp - HTTP - HTTP/1.1 301 Moved Permanently
+Date:...
+2025-02-27 18:05:06,097 [INFO]   443/tcp - HTTPS - HTTP/1.1 400 Bad Request
+Date: Thu, ...
+2025-02-27 18:05:06,097 [INFO] Phase 3: WAF Detection
+2025-02-27 18:05:06,098 [INFO] Testing WAF presence and bypass methods on http://smktarunabhakti.net...
+2025-02-27 18:05:07,370 [INFO] No WAF detected
+2025-02-27 18:05:07,371 [INFO] Phase 4: Directory Scanning
+2025-02-27 18:05:07,372 [INFO] Scanning for sensitive directories and files on http://smktarunabhakti.net...
+2025-02-27 18:05:07,455 [INFO] Found: http://smktarunabhakti.net/login/ (301 - 327 bytes)
+2025-02-27 18:05:07,458 [INFO] Found: http://smktarunabhakti.net/admin/ (301 - 327 bytes)
+2025-02-27 18:05:07,459 [INFO] Found: http://smktarunabhakti.net/backup/ (301 - 328 bytes)
+2025-02-27 18:05:07,460 [INFO] Found: http://smktarunabhakti.net/wp-admin/ (301 - 330 bytes)
+2025-02-27 18:05:07,461 [INFO] Found: http://smktarunabhakti.net/.git/ (301 - 326 bytes)
+2025-02-27 18:05:07,461 [INFO] Found: http://smktarunabhakti.net/config/ (301 - 328 bytes)
+2025-02-27 18:05:07,462 [INFO] Found: http://smktarunabhakti.net/phpmyadmin/ (301 - 332 bytes)
+2025-02-27 18:05:07,467 [INFO] Found: http://smktarunabhakti.net/api/ (301 - 325 bytes)
+2025-02-27 18:05:07,471 [INFO] Found: http://smktarunabhakti.net/.env (301 - 325 bytes)
+2025-02-27 18:05:07,474 [INFO] Found: http://smktarunabhakti.net/dashboard/ (301 - 331 bytes)
+2025-02-27 18:05:07,495 [INFO] Found: http://smktarunabhakti.net/administrator/ (301 - 335 bytes)
+2025-02-27 18:05:07,496 [INFO] Found: http://smktarunabhakti.net/temp/ (301 - 326 bytes)
+2025-02-27 18:05:07,500 [INFO] Found: http://smktarunabhakti.net/dev/ (301 - 325 bytes)
+2025-02-27 18:05:07,508 [INFO] Found: http://smktarunabhakti.net/wp-content/ (301 - 332 bytes)
+2025-02-27 18:05:07,508 [INFO] Found: http://smktarunabhakti.net/db/ (301 - 324 bytes)
+2025-02-27 18:05:07,509 [INFO] Found: http://smktarunabhakti.net/install/ (301 - 329 bytes)
+2025-02-27 18:05:07,509 [INFO] Found: http://smktarunabhakti.net/test/ (301 - 326 bytes)
+2025-02-27 18:05:07,509 [INFO] Found: http://smktarunabhakti.net/logs/ (301 - 326 bytes)
+2025-02-27 18:05:07,511 [INFO] Found 18 interesting directories/files
+2025-02-27 18:05:07,511 [INFO] Phase 5: Vulnerability Scanning
+2025-02-27 18:05:07,512 [INFO] Starting vulnerability scan on http://smktarunabhakti.net...
+2025-02-27 18:13:32,939 [INFO] Phase 6: Generating Exploit Suggestions
+2025-02-27 18:13:32,939 [INFO] Generating exploit suggestions...
+2025-02-27 18:13:32,940 [INFO] Phase 7: Generating Report
+2025-02-27 18:13:32,940 [INFO] Generating final report...
+2025-02-27 18:13:32,943 [ERROR] An error occurred: name 'url' is not defined

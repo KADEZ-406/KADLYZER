@@ -1,0 +1,104 @@
+2025-02-27 18:44:30,462 [INFO] Starting scan on https://kpk.go.id...
+2025-02-27 18:44:30,464 [INFO] Phase 1: Reconnaissance
+2025-02-27 18:44:30,464 [INFO] Starting reconnaissance on kpk.go.id...
+2025-02-27 18:44:30,477 [INFO] IP Target: 103.154.128.237 (+ 0 additional)
+2025-02-27 18:44:31,642 [INFO] WHOIS Data retrieved successfully
+2025-02-27 18:44:31,811 [INFO] SSL Certificate: Valid until Jan  6 23:59:59 2026 GMT
+2025-02-27 18:44:35,230 [INFO] DNS records retrieved successfully
+2025-02-27 18:44:35,232 [INFO] Phase 2: Port Scanning
+2025-02-27 18:44:35,232 [INFO] Starting port scan on kpk.go.id...
+2025-02-27 18:44:35,366 [INFO] Port 443 (HTTPS) is open
+2025-02-27 18:44:35,371 [INFO] Port 80 (HTTP) is open
+2025-02-27 18:44:40,253 [INFO] Found 2 open ports
+2025-02-27 18:44:40,254 [INFO]   80/tcp - HTTP
+2025-02-27 18:44:40,254 [INFO]   443/tcp - HTTPS
+2025-02-27 18:44:40,254 [INFO] Phase 3: WAF Detection
+2025-02-27 18:44:40,255 [INFO] Testing WAF presence and bypass methods on https://kpk.go.id...
+2025-02-27 18:44:43,937 [INFO] No WAF detected
+2025-02-27 18:44:43,939 [INFO] Phase 4: Directory Scanning
+2025-02-27 18:44:43,939 [INFO] Scanning for sensitive directories and files on https://kpk.go.id...
+2025-02-27 18:44:44,147 [INFO] Found: https://kpk.go.id/login/ (302 - 0 bytes)
+2025-02-27 18:44:44,148 [INFO] Found: https://kpk.go.id/backup/ (302 - 0 bytes)
+2025-02-27 18:44:44,150 [INFO] Found: https://kpk.go.id/.git/ (200 - 795 bytes)
+2025-02-27 18:44:44,158 [INFO] Found: https://kpk.go.id/wp-content/ (302 - 0 bytes)
+2025-02-27 18:44:44,163 [INFO] Found: https://kpk.go.id/dashboard/ (302 - 0 bytes)
+2025-02-27 18:44:44,163 [INFO] Found: https://kpk.go.id/wp-admin/ (302 - 0 bytes)
+2025-02-27 18:44:44,163 [INFO] Found: https://kpk.go.id/config/ (302 - 0 bytes)
+2025-02-27 18:44:44,165 [INFO] Found: https://kpk.go.id/administrator/ (302 - 0 bytes)
+2025-02-27 18:44:44,165 [INFO] Found: https://kpk.go.id/phpmyadmin/ (302 - 0 bytes)
+2025-02-27 18:44:44,174 [INFO] Found: https://kpk.go.id/admin/ (302 - 0 bytes)
+2025-02-27 18:44:44,192 [INFO] Found: https://kpk.go.id/dev/ (302 - 0 bytes)
+2025-02-27 18:44:44,196 [INFO] Found: https://kpk.go.id/install/ (302 - 0 bytes)
+2025-02-27 18:44:44,197 [INFO] Found: https://kpk.go.id/db/ (302 - 0 bytes)
+2025-02-27 18:44:44,224 [INFO] Found: https://kpk.go.id/temp/ (302 - 0 bytes)
+2025-02-27 18:44:44,225 [INFO] Found: https://kpk.go.id/logs/ (302 - 0 bytes)
+2025-02-27 18:44:44,225 [INFO] Found: https://kpk.go.id/.env (302 - 0 bytes)
+2025-02-27 18:44:44,225 [INFO] Found: https://kpk.go.id/test/ (302 - 0 bytes)
+2025-02-27 18:44:44,314 [INFO] Found 17 interesting directories/files
+2025-02-27 18:44:44,315 [INFO] Phase 5: Vulnerability Scanning
+2025-02-27 18:44:44,315 [INFO] Starting vulnerability scan on https://kpk.go.id...
+2025-02-27 18:53:57,593 [INFO] Phase 6: Generating Exploit Suggestions
+2025-02-27 18:53:57,593 [INFO] Generating exploit suggestions...
+2025-02-27 18:53:57,595 [INFO] Starting advanced vulnerability scan...
+2025-02-27 18:53:59,763 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:53:59,796 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:53:59,807 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:53:59,808 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:53:59,809 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:53:59,811 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:53:59,812 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:53:59,815 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:53:59,817 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:53:59,819 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:53:59,822 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:53:59,824 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:53:59,825 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:53:59,827 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:53:59,832 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:53:59,839 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:53:59,842 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:00,046 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:00,081 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:00,082 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:00,084 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:00,117 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:00,118 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:00,140 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:00,141 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:00,143 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:00,143 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:00,162 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:01,176 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:01,187 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:01,189 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:14,578 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:17,716 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:19,960 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:22,829 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:23,144 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:33,404 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:35,272 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:35,317 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:35,395 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:35,399 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:35,406 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:35,463 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:35,512 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:35,861 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:35,943 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:36,019 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:36,232 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:36,242 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:36,599 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:36,908 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:36,969 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:37,937 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:37,947 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:38,189 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:38,342 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:38,915 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:39,231 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:40,269 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:40,897 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:41,041 [WARNING] Connection pool is full, discarding connection: kpk.go.id. Connection pool size: 10
+2025-02-27 18:54:41,045 [INFO] Performing advanced DoS testing...

